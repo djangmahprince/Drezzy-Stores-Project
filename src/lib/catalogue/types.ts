@@ -1,0 +1,51 @@
+// Catalogue types shared by server and client code. No imports, so tests can load this file directly.
+
+export type Availability = "Available" | "Limited" | "Unavailable" | "Pre-order";
+export type Audience = "Men" | "Ladies" | "Men and ladies" | "Unisex";
+export type Tone = "navy" | "grey" | "blue" | "red" | "charcoal";
+export type ArtKind = "sneaker" | "apparel" | "watch" | "slide" | "cap";
+export type Art = { kind: ArtKind; tone: Tone; upper: string; accent: string };
+
+/** One size of one colour (and style, where the product has one). Price and availability live here. */
+export type Variant = {
+  id?: string;
+  style?: string;
+  colour: string;
+  size: string;
+  sku: string;
+  price: number;
+  compareAt?: number;
+  availability: Availability;
+  leadDays: number;
+};
+
+export type Product = {
+  id?: string;
+  slug: string;
+  sku: string;
+  name: string;
+  brand: string;
+  category: string; // top-level category, for example "Sneakers"
+  subcategory?: string; // for example "Men"
+  audience: Audience;
+  /** The lowest variant price. `priceVaries` says whether other variants cost more. */
+  price: number;
+  compareAt?: number;
+  priceVaries: boolean;
+  styles?: string[];
+  colours: string[];
+  variants: Variant[];
+  /** One entry per size, showing the best availability across colours and styles. Used on cards and filters. */
+  sizes: { size: string; availability: Availability }[];
+  isNew?: boolean;
+  popular: number;
+  /** The shortest supplier lead time across variants. A chosen variant has its own. */
+  leadDays: number;
+  description: string;
+  details: string[];
+  condition: string;
+  art: Art;
+};
+
+/** What a product looks like before its derived fields are worked out. */
+export type ProductBase = Omit<Product, "price" | "compareAt" | "priceVaries" | "styles" | "colours" | "sizes" | "leadDays" | "variants">;

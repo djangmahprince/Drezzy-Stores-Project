@@ -1,0 +1,40 @@
+{
+  "name": "drezzy-stores",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test:db": "node supabase/tests/rls.test.mjs",
+    "test:catalogue": "node --no-warnings supabase/tests/catalogue.test.mjs",
+    "test:seed": "node --no-warnings supabase/tests/seed.test.mjs",
+    "seed:generate": "node --no-warnings scripts/generate-seed.mjs",
+    "test:orders": "node --no-warnings supabase/tests/orders.test.mjs",
+    "test:payments": "node --no-warnings supabase/tests/payments.test.mjs",
+    "test:orders-logic": "node --no-warnings supabase/tests/orders-logic.test.mjs",
+    "test:orders-contract": "node --no-warnings supabase/tests/orders-contract.test.mjs",
+    "test": "npm run test:db && npm run test:seed && npm run test:catalogue && npm run test:payments && npm run test:orders-logic && npm run test:orders && npm run test:orders-contract"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "next": "16.4.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "read-excel-file": "^9.3.12"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@electric-sql/pglite": "^0.5.11",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

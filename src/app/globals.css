@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+:root {
+  --navy: #00115b;
+  --navy-2: #0020a9;
+  --navy-watermark: #0c1b60;
+  --lime: #9cff00;
+  --blue: #0036ff;
+  --ink: #0a0a0a;
+  --charcoal: #404040;
+  --page: #ececef;
+  --card: #f5f5f6;
+  --line: #e3e4ea;
+  --muted: #9a9fb2;
+  --text-2: #5b617a;
+  --dark-ui: #23273a;
+  --success: #12805c;
+  --warning: #b26a00;
+  --error: #c62828;
+}
+
+@theme inline {
+  --color-navy: var(--navy);
+  --color-navy-2: var(--navy-2);
+  --color-lime: var(--lime);
+  --color-ink: var(--ink);
+  --color-charcoal: var(--charcoal);
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-text2: var(--text-2);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --font-sans: var(--font-lexend), system-ui, sans-serif;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-lexend), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@utility btn {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-[12px] px-5 text-[15px] font-semibold transition-colors duration-200;
+  }
+@utility btn-primary {
+    @apply btn bg-navy text-white hover:bg-navy-2;
+  }
+@utility btn-lime {
+    @apply btn bg-lime text-navy hover:brightness-95;
+  }
+@utility btn-outline {
+    @apply btn border border-line bg-white text-navy hover:bg-card;
+  }
+@utility chip {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+@utility field {
+    @apply min-h-12 w-full rounded-[12px] border border-line bg-white px-3 text-[15px] outline-none focus:border-navy;
+  }
+@utility card {
+    @apply rounded-[12px] border border-line bg-white;
+  }
+@utility hero-card {
+    @apply rounded-[24px] bg-white shadow-[0_8px_30px_rgba(0,17,91,0.10)];
+  }
+@utility label-wide {
+    @apply text-[11px] font-medium uppercase tracking-[0.6em];
+  }
