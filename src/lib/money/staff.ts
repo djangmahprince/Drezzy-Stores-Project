@@ -14,6 +14,8 @@ export type MoneyData = {
   summary: MoneySummary | null; // null for roles limited to one expense category
   ledger: LedgerRow[];
   canAdd: boolean;
+  /** Owner and Finance: a link to the salary records. */
+  canSeeSalaries: boolean;
   /** Categories this person may record, in the form the expense action expects. */
   categories: { value: string; label: string }[];
 };
@@ -52,6 +54,7 @@ export async function getMoney(month: string): Promise<MoneyData> {
     summary: s ? { moneyIn: Number(s.money_in), moneyOut: Number(s.money_out), net: Number(s.net), owed: Number(s.balances_to_collect), byCategory: s.out_by_category.map((c) => ({ category: c.category, amount: Number(c.amount) })) } : null,
     ledger: ((rows ?? []) as { at: string; direction: "in" | "out"; category: string; amount: number | string; branch: string; method: string; label: string; source: string }[]).map((r) => ({ ...r, amount: Number(r.amount) })),
     canAdd: can(me.permissions, "expenses", "create"),
+    canSeeSalaries: can(me.permissions, "salary", "view"),
     categories: ALL,
   };
 }

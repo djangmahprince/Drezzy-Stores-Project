@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { Beacon } from "@/components/store/Beacon";
 import { Suspense } from "react";
 import { CheckoutForm } from "@/components/store/CheckoutForm";
 import { paymentOptions } from "@/lib/payments/config";
@@ -10,7 +11,12 @@ export const metadata = { title: "Checkout" };
 // Paystack key or MoMo number then takes effect straight away, without rebuilding the site.
 async function Form() {
   await connection();
-  return <CheckoutForm live={isSupabaseConfigured ? paymentOptions() : null} />;
+  return (
+    <>
+      <Beacon name="checkout_started" />
+      <CheckoutForm live={isSupabaseConfigured ? paymentOptions() : null} />
+    </>
+  );
 }
 
 export default function Checkout() {

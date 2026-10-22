@@ -1,14 +1,18 @@
-import { Guard } from "@/components/dashboard/Guard";
+import { Suspense } from "react";
+import { AnalyticsLive } from "@/components/dashboard/AnalyticsLive";
 import { Kpi, PageHead, Progress, Table } from "@/components/dashboard/DashShell";
+import { Guard } from "@/components/dashboard/Guard";
+import { getAnalytics, ranges } from "@/lib/analytics/staff";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const metadata = { title: "Analytics" };
 
 const funnel: [string, number][] = [["Visit", 1200], ["Product view", 640], ["Add to cart", 180], ["Checkout started", 95], ["Payment started", 70], ["Order placed", 58], ["Paid", 46], ["Delivered", 40]];
 
-export default function Analytics() {
+function Sample() {
   return (
-    <Guard module="analytics">
-      <PageHead title="Analytics" sub="What sold, who bought, where they came from, and where we lose people" actions={<button className="btn-outline">Export</button>} />
+    <>
+      <PageHead title="Analytics" sub="Sample figures. Connect Supabase to see your own." />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Gross sales" value="GHS 19,200" note="46 paid orders" />
         <Kpi label="Average order value" value="GHS 401" />
@@ -23,11 +27,35 @@ export default function Analytics() {
           ))}</ul>
         </section>
         <section>
-          <h2 className="mb-2 font-semibold">Tracked source vs self-reported</h2>
-          <Table head={["Source", "Tracked", "Self-reported"]} rows={[["Instagram", "14", "16"], ["TikTok", "9", "10"], ["Direct link", "12", "0"], ["WhatsApp", "7", "8"], ["Friend or relative", "0", "6"]]} />
-          <p className="mt-2 text-xs text-text2">Often disagree: for example arrived by direct link but said &ldquo;friend or relative&rdquo;.</p>
+          <h2 className="mb-2 font-semibold">Where orders came from</h2>
+          <Table head={["Source", "Orders"]} rows={[["Instagram", "16"], ["TikTok", "10"], ["WhatsApp", "8"], ["Friend or relative", "6"]]} />
         </section>
       </div>
+    </>
+  );
+}
+
+async function Live({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  const { days } = await searchParams;
+  const n = (ranges as readonly number[]).includes(Number(days)) ? Number(days) : 30;
+  const a = await getAnalytics(n);
+  if (!a) return <p className="card p-6 text-sm text-text2">Analytics could not be loaded. Please try again.</p>;
+  return <AnalyticsLive a={a} />;
+}
+
+export default function Analytics({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  return (
+    <Guard module="analytics">
+      {isSupabaseConfigured ? (
+        <>
+          <PageHead real title="Analytics" sub="What sold, who bought, where they came from, and where we lose people" />
+          <Suspense fallback={<div className="h-64 animate-pulse rounded-[12px] bg-white" aria-busy="true" />}>
+            <Live searchParams={searchParams} />
+          </Suspense>
+        </>
+      ) : (
+        <Sample />
+      )}
     </Guard>
   );
 }

@@ -27,7 +27,10 @@ npm run build
 | Refunds | Built. Support requests, Finance/Admin/Owner approve and pay (not their own request); shown as money out |
 | Customer emails | Built. The database queues one email per customer-facing order update; `/api/notifications/run` sends them through Resend every 5 minutes (needs `RESEND_API_KEY`, `NOTIFY_FROM`, `CRON_SECRET`) |
 | Delivery zones | Built. Settings edits fee, days, half payment and on/off; the shop, cart and checkout read the database zones |
-| Still to build | WhatsApp updates, targets and daily reports, analytics and funnel, Drip School CMS, exports, salary records, courier APIs |
+| Targets, daily reports | Built. Targets are counted from orders, supplier orders and reports; every staff member files a daily report; managers see who has not |
+| Analytics | Built. Sales, new vs repeat customers, best sellers, sources, and a funnel from anonymous shop visits to delivery. Money figures hidden from non-money roles |
+| Salary records | Built. Owner and Finance only; paid salaries are locked and count as money out |
+| Still to build | WhatsApp updates, Drip School CMS, exports, salary records, courier APIs |
 
 ## Connecting Supabase (about ten minutes)
 

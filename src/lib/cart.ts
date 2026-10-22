@@ -4,6 +4,7 @@ import { useCatalogue } from "@/components/CatalogueProvider";
 import { findVariant } from "@/lib/catalogue/build";
 import type { Product } from "@/lib/catalogue/types";
 import type { Zone } from "@/lib/data";
+import { trackEvent } from "@/lib/track";
 import { createStore, useStore } from "@/lib/store";
 
 export type CartLine = {
@@ -26,6 +27,7 @@ export const lineKey = (slug: string, size: string, colour: string, style?: stri
 
 export function addToCart(p: Product, pick: { size: string; colour: string; style?: string }, qty = 1) {
   const key = lineKey(p.slug, pick.size, pick.colour, pick.style);
+  trackEvent("add_to_cart");
   cart.set((s) => {
     const existing = s.lines.find((l) => l.key === key);
     const lines = existing

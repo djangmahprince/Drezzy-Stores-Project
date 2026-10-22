@@ -256,7 +256,7 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
 
                 {(status === "dispatched" || status === "out") && <button type="button" disabled={pending} className="btn-outline w-full !min-h-10" onClick={() => run(() => advanceOrderAction(d.id, "failed"), "Marked as a failed delivery.")}>Delivery failed</button>}
                 {status === "failed" && <button type="button" disabled={pending} className="btn-outline w-full !min-h-10" onClick={() => run(() => advanceOrderAction(d.id, "out"), "Rescheduled: out for delivery.")}>Reschedule: out for delivery</button>}
-                <button type="button" disabled={pending} className="w-full text-sm text-error underline" onClick={() => { if (window.confirm(`Cancel ${d.number}? ${d.money.paid > 0 ? "It has been paid, so a refund must be arranged." : ""}`)) run(() => advanceOrderAction(d.id, "cancelled", "Cancelled by staff"), "Order cancelled."); }}>Cancel this order</button>
+                <button type="button" disabled={pending} className="w-full text-sm text-error underline" onClick={() => { if (window.confirm(`Cancel ${d.number}? ${d.money.paid > 0 ? "It has been paid, so a refund must be arranged." : ""}`)) run(() => advanceOrderAction(d.id, "cancelled", "Cancelled by staff"), d.money.paid > 0 && r.canRequestRefund ? "Order cancelled. The refund request below is filled in for you: check it and send." : "Order cancelled.", () => { if (d.money.paid > 0) setRef({ amount: String(d.money.paid), reason: "Order cancelled" }); }); }}>Cancel this order</button>
               </>
             )}
 

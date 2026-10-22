@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ProductArt } from "@/components/ProductArt";
+import { Beacon } from "@/components/store/Beacon";
 import { ProductBuy } from "@/components/store/ProductBuy";
 import { ProductCard } from "@/components/store/ProductCard";
 import { getCatalogue } from "@/lib/catalogue/server";
@@ -67,6 +68,7 @@ async function ProductPageContent({ params }: { params: Promise<{ slug: string }
         </div>
 
         <div>
+          <Beacon name="product_view" />
           <ProductBuy product={p} />
 
           <div className="mt-8">

@@ -1,5 +1,9 @@
+import { Suspense } from "react";
 import { Guard } from "@/components/dashboard/Guard";
 import { Kpi, PageHead, Pill, Progress } from "@/components/dashboard/DashShell";
+import { TeamLive } from "@/components/dashboard/TeamLive";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getTeam } from "@/lib/team/staff";
 
 export const metadata = { title: "Staff and targets" };
 
@@ -13,9 +17,30 @@ const rows: [string, string, string, number, "ok" | "warn" | "bad", string][] = 
   ["Kofi · Rider partner, Kumasi", "25 deliveries", "21 of 25", 84, "ok", "On pace"],
 ];
 
+async function Live() {
+  return <TeamLive d={await getTeam()} />;
+}
+
 export default function Staff() {
   return (
     <Guard module={["targets_view", "targets_set", "staff"]}>
+      {isSupabaseConfigured ? (
+        <>
+          <PageHead real title="Staff and targets" sub="Progress is counted from real orders, supplier orders and deliveries. Daily reports fill the gaps." />
+          <Suspense fallback={<div className="h-64 animate-pulse rounded-[12px] bg-white" aria-busy="true" />}>
+            <Live />
+          </Suspense>
+        </>
+      ) : (
+        <Sample />
+      )}
+    </Guard>
+  );
+}
+
+function Sample() {
+  return (
+    <>
       <PageHead title="Staff and targets" sub="Progress is counted from real orders, supplier orders and deliveries. Daily reports fill the gaps." actions={<button className="btn-primary">Set a target</button>} />
       <div className="grid grid-cols-3 gap-3">
         <Kpi label="Targets on pace or hit" value="5 of 7" note="2 need a check-in" />
@@ -39,6 +64,6 @@ export default function Staff() {
           <li><b>Yaw</b> · Sent 19:20 · 7 deliveries, 1 failed in Obuasi, rescheduled for today.</li>
         </ul>
       </section>
-    </Guard>
+    </>
   );
 }

@@ -47,6 +47,7 @@ export function MoneyLive({ d }: { d: MoneyData }) {
         <Link href={`/dashboard/money?month=${d.prev}`} className="btn-outline !min-h-10" aria-label="Previous month">‹</Link>
         <span className="min-w-36 text-center font-semibold">{d.label}</span>
         <Link href={`/dashboard/money?month=${d.next}`} className="btn-outline !min-h-10" aria-label="Next month">›</Link>
+        {d.canSeeSalaries && <Link href={`/dashboard/money/salaries?month=${d.month}`} className="btn-outline !min-h-10 ml-auto">Salaries</Link>}
       </div>
 
       {s ? (
