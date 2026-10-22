@@ -25,7 +25,8 @@ npm run build
 | Sourcing: supplier orders | Built. Order from a supplier after payment, receive, or mark failed; costs hidden from roles without money access |
 | Money: ledger, expenses, monthly summary | Built. One ledger over payments, supplier costs and expenses; role category limits |
 | Refunds | Built. Support requests, Finance/Admin/Owner approve and pay (not their own request); shown as money out |
-| Still to build | Emails and WhatsApp updates, targets and daily reports, analytics and funnel, Drip School CMS, exports, salary records, courier APIs |
+| Customer emails | Built. The database queues one email per customer-facing order update; `/api/notifications/run` sends them through Resend every 5 minutes (needs `RESEND_API_KEY`, `NOTIFY_FROM`, `CRON_SECRET`) |
+| Still to build | WhatsApp updates, targets and daily reports, analytics and funnel, Drip School CMS, exports, salary records, courier APIs |
 
 ## Connecting Supabase (about ten minutes)
 
