@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
-  addNoteAction, advanceOrderAction, moveBackAction, recordBalanceAction, recordPaymentAction, reviewPaymentAction, updateDeliveryAction, type ActionResult,
+  addNoteAction, advanceOrderAction, failSupplierOrderAction, moveBackAction, placeSupplierOrderAction, receiveSupplierOrderAction, recordBalanceAction, recordPaymentAction, reviewPaymentAction, updateDeliveryAction, type ActionResult,
 } from "@/app/dashboard/orders/actions";
 import { PageHead, Pill } from "@/components/dashboard/DashShell";
 import { formatGHS } from "@/lib/data";
@@ -31,6 +31,7 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
   const [note, setNote] = useState("");
   const [back, setBack] = useState({ to: "" as Status | "", reason: "" });
   const [pay, setPay] = useState<{ kind: "payment" | "balance" | null; method: "momo" | "cash"; ref: string }>({ kind: null, method: "cash", ref: "" });
+  const [src, setSrc] = useState({ supplier: "", items: [] as string[], cost: "", expected: "", note: "" });
   const [del, setDel] = useState({ courier: d.courier ?? "", tracking: d.tracking ?? "", riderName: d.rider.name ?? "", riderPhone: d.rider.phone ?? "" });
 
   const status = statusFromDb(d.status);
@@ -95,6 +96,47 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
               {d.money.balance > 0 && <div className="flex justify-between font-semibold text-warning"><dt>Balance to collect</dt><dd>{formatGHS(d.money.balance)}</dd></div>}
             </dl>
           </section>
+
+          {(d.paymentState === "paid" || d.paymentState === "part_paid" || d.supplierOrders.length > 0) && (
+            <section className="card space-y-3 p-4 text-sm">
+              <h2 className="font-semibold">Sourcing</h2>
+              <ul className="divide-y divide-line">
+                {d.items.map((i) => (
+                  <li key={i.id} className="flex items-center justify-between gap-2 py-2">
+                    <span>{i.name} <span className="text-text2">· {i.label}</span></span>
+                    <Pill tone={i.sourcing === "received" ? "ok" : i.sourcing === "ordered" ? "info" : i.sourcing === "failed" ? "bad" : "warn"}>{i.sourcing === "pending" ? "To order" : i.sourcing}</Pill>
+                  </li>
+                ))}
+              </ul>
+              {d.supplierOrders.map((s) => (
+                <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] bg-card p-3">
+                  <span><b>{s.supplier}</b> · {s.status}{s.cost !== null ? ` · ${formatGHS(s.cost)}` : ""}<br /><span className="text-xs text-text2">Ordered {s.orderedAt}{s.expected ? ` · expected ${s.expected}` : ""}{s.receivedAt ? ` · received ${s.receivedAt}` : ""}</span></span>
+                  {s.status === "ordered" && r.canSource && (
+                    <span className="flex gap-2">
+                      <button type="button" disabled={pending} className="btn-primary !min-h-9 text-xs" onClick={() => run(() => receiveSupplierOrderAction(s.id), "Marked as received.")}>Mark received</button>
+                      <button type="button" disabled={pending} className="btn-outline !min-h-9 text-xs" onClick={() => { const why = window.prompt("Why could the supplier not provide it?"); if (why) run(() => failSupplierOrderAction(s.id, why), "Marked as failed. You can try another supplier."); }}>Could not source</button>
+                    </span>
+                  )}
+                </div>
+              ))}
+              {r.canSource && d.items.some((i) => i.sourcing === "pending" || i.sourcing === "failed") && !final && (
+                <div className="space-y-2 rounded-[12px] border border-line p-3">
+                  <p className="font-medium">Order from a supplier</p>
+                  <select aria-label="Supplier" className="field !min-h-10" value={src.supplier} onChange={(e) => setSrc({ ...src, supplier: e.target.value })}>
+                    <option value="">Choose a supplier</option>{d.suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                  {d.items.filter((i) => i.sourcing === "pending" || i.sourcing === "failed").map((i) => (
+                    <label key={i.id} className="flex min-h-10 items-center gap-2"><input type="checkbox" className="size-5 accent-[#00115b]" checked={src.items.includes(i.id)} onChange={(e) => setSrc({ ...src, items: e.target.checked ? [...src.items, i.id] : src.items.filter((x) => x !== i.id) })} /> {i.name} · {i.label}</label>
+                  ))}
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input aria-label="Agreed cost" type="number" min={0} placeholder="Agreed cost (GHS)" className="field !min-h-10" value={src.cost} onChange={(e) => setSrc({ ...src, cost: e.target.value })} />
+                    <input aria-label="Expected date" type="date" className="field !min-h-10" value={src.expected} onChange={(e) => setSrc({ ...src, expected: e.target.value })} />
+                  </div>
+                  <button type="button" disabled={pending || !src.supplier || src.items.length === 0 || src.cost === ""} className="btn-primary w-full !min-h-10 disabled:opacity-60" onClick={() => run(() => placeSupplierOrderAction({ orderId: d.id, supplierId: src.supplier, itemIds: src.items, cost: Number(src.cost), expected: src.expected }), "Supplier order placed. The customer's tracker has updated.", () => setSrc({ supplier: "", items: [], cost: "", expected: "", note: "" }))}>Place supplier order</button>
+                </div>
+              )}
+            </section>
+          )}
 
           <section className="card p-4 text-sm">
             <h2 className="font-semibold">Payments</h2>

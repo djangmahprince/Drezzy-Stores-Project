@@ -104,7 +104,9 @@ export function buildTrack(t: TrackJson): TrackView {
     })(),
     (() => {
       const e = evFor("Item received at our branch");
-      return e ? `Received at the ${branchName(t.branch)} branch · ${shortTime(e.at)}` : "We order your item from our supplier as soon as it is confirmed.";
+      if (e) return `Received at the ${branchName(t.branch)} branch · ${shortTime(e.at)}`;
+      const ordered = evFor("Getting your item from our supplier");
+      return ordered ? `Ordered from our supplier · ${shortTime(ordered.at)}` : "We order your item from our supplier as soon as it is confirmed.";
     })(),
     (() => {
       const e = evFor("Checked and packed");

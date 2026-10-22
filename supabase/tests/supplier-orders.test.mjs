@@ -1,7 +1,7 @@
 // The sourcing flow: ordering from suppliers after payment, receiving, failing. Run with: npm run test:supplier-orders
 import { createHarness } from "./harness.mjs";
 
-const { db, ids, ok, as, asRole, tryQ, addStaff, done } = await createHarness({ seed: true });
+const { db, ok, as, asRole, tryQ, addStaff, done } = await createHarness({ seed: true });
 for (const [n, r] of [["sourcing", "sourcing_officer"], ["sales", "sales_agent"], ["finance", "finance"], ["dispatch", "dispatch_coordinator"], ["admin", "admin"]]) await addStaff(n, r);
 
 const vid = async (sku) => (await db.query("select id from public.variants where sku = $1", [sku])).rows[0].id;

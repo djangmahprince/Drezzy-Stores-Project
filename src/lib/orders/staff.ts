@@ -2,7 +2,7 @@ import "server-only";
 import { requireStaff } from "@/lib/auth";
 import type { DashOrder } from "@/lib/orders/dash-types";
 import { orderFromRow, type OrderRow } from "@/lib/orders/map";
-import { can } from "@/lib/permissions";
+import { can, canSeeCosts } from "@/lib/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,6 +14,10 @@ export type OrderRights = {
   canOverride: boolean;
   /** Match a manual MoMo payment to the statement (Finance, Admin, Owner). */
   canReviewPayments: boolean;
+  /** Order from suppliers and mark them received (Sourcing, Admin, Owner). */
+  canSource: boolean;
+  /** See what suppliers charge. */
+  canSeeCosts: boolean;
 };
 
 const rightsOf = (perms: Parameters<typeof can>[0]): OrderRights => ({
@@ -21,6 +25,8 @@ const rightsOf = (perms: Parameters<typeof can>[0]): OrderRights => ({
   canCreate: can(perms, "orders", "create"),
   canOverride: can(perms, "orders", "delete"),
   canReviewPayments: can(perms, "expenses", "edit") || can(perms, "orders", "delete"),
+  canSource: can(perms, "availability", "edit"),
+  canSeeCosts: canSeeCosts(perms),
 });
 
 const LIST_SELECT =
@@ -62,7 +68,9 @@ export type OrderDetail = {
   rider: { name: string | null; phone: string | null };
   estDelivery: string | null;
   money: { subtotal: number; fee: number; discount: number; discountReason: string | null; total: number; paid: number; balance: number };
-  items: { name: string; label: string; qty: number; unit: number }[];
+  items: { id: string; name: string; label: string; qty: number; unit: number; sourcing: string }[];
+  supplierOrders: { id: string; supplier: string; status: string; orderedAt: string; expected: string | null; receivedAt: string | null; itemIds: string[]; cost: number | null; note: string | null }[];
+  suppliers: { id: string; name: string }[];
   events: { kind: string; status: string | null; at: string; actor: string | null; publicNote: string | null; internalNote: string | null }[];
   payments: { id: string; kind: string; provider: string; method: string | null; reference: string; txn: string | null; amount: number; status: string; at: string }[];
   notes: { author: string | null; body: string; at: string }[];
@@ -80,7 +88,8 @@ type DetailRow = {
   source: string | null; source_detail: string | null; agent_name: string | null; courier: string | null; tracking_number: string | null;
   rider_name: string | null; rider_phone: string | null; est_delivery_date: string | null;
   customer: { full_name: string; phone: string; email: string | null } | { full_name: string; phone: string; email: string | null }[] | null;
-  items: { product_name: string; variant_label: string; qty: number; unit_price: number | string }[] | null;
+  items: { id: string; product_name: string; variant_label: string; qty: number; unit_price: number | string; sourcing: string }[] | null;
+  supplier_orders: { id: string; status: string; ordered_at: string; expected_at: string | null; received_at: string | null; note: string | null; supplier: { name: string } | { name: string }[] | null; items: { order_item_id: string }[] | null; cost: { agreed_cost: number | string } | { agreed_cost: number | string }[] | null }[] | null;
   events: { kind: string; status: string | null; at: string; actor_name: string | null; public_note: string | null; internal_note: string | null; id: number }[] | null;
   payments: { id: string; kind: string; provider: string; method: string | null; reference: string; external_ref: string | null; amount: number | string; status: string; created_at: string }[] | null;
   notes: { author_name: string | null; body: string; at: string; id: number }[] | null;
@@ -92,13 +101,16 @@ export async function getOrderDetail(number: string): Promise<OrderDetail | null
   const supabase = await createClient();
   const { data } = await supabase
     .from("orders")
-    .select("*, customer:customers(full_name, phone, email), items:order_items(*), events:order_events(*), payments(*), notes:order_notes(*)")
+    .select("*, customer:customers(full_name, phone, email), items:order_items(*), events:order_events(*), payments(*), notes:order_notes(*), supplier_orders(*, supplier:suppliers(name), items:supplier_order_items(order_item_id), cost:supplier_order_costs(agreed_cost))")
     .eq("number", number.toUpperCase())
     .maybeSingle();
   if (!data) return null;
 
   const r = data as unknown as DetailRow;
   const c = Array.isArray(r.customer) ? r.customer[0] : r.customer;
+  const rights = rightsOf(me.permissions);
+  const { data: sup } = rights.canSource ? await supabase.from("suppliers").select("id, name").eq("active", true).order("name") : { data: [] };
+  const first = <T,>(v: T | T[] | null | undefined) => (Array.isArray(v) ? v[0] : (v ?? undefined));
   return {
     id: r.id,
     number: r.number,
@@ -122,12 +134,20 @@ export async function getOrderDetail(number: string): Promise<OrderDetail | null
       subtotal: Number(r.subtotal), fee: Number(r.delivery_fee), discount: Number(r.discount), discountReason: r.discount_reason,
       total: Number(r.total), paid: Number(r.amount_paid), balance: Number(r.balance_due),
     },
-    items: (r.items ?? []).map((i) => ({ name: i.product_name, label: i.variant_label, qty: i.qty, unit: Number(i.unit_price) })),
+    items: (r.items ?? []).map((i) => ({ id: i.id, name: i.product_name, label: i.variant_label, qty: i.qty, unit: Number(i.unit_price), sourcing: i.sourcing })),
+    supplierOrders: [...(r.supplier_orders ?? [])].sort((a, b) => b.ordered_at.localeCompare(a.ordered_at)).map((s) => {
+      const cost = first(s.cost);
+      return {
+        id: s.id, supplier: first(s.supplier)?.name ?? "Supplier", status: s.status, orderedAt: stamp(s.ordered_at), expected: s.expected_at,
+        receivedAt: s.received_at ? stamp(s.received_at) : null, itemIds: (s.items ?? []).map((x) => x.order_item_id), cost: cost ? Number(cost.agreed_cost) : null, note: s.note,
+      };
+    }),
+    suppliers: (sup ?? []) as { id: string; name: string }[],
     events: [...(r.events ?? [])].sort((a, b) => b.id - a.id).map((e) => ({ kind: e.kind, status: e.status, at: stamp(e.at), actor: e.actor_name, publicNote: e.public_note, internalNote: e.internal_note })),
     payments: [...(r.payments ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((p) => ({
       id: p.id, kind: p.kind, provider: p.provider, method: p.method, reference: p.reference, txn: p.external_ref, amount: Number(p.amount), status: p.status, at: stamp(p.created_at),
     })),
     notes: [...(r.notes ?? [])].sort((a, b) => b.id - a.id).map((n) => ({ author: n.author_name, body: n.body, at: stamp(n.at) })),
-    rights: rightsOf(me.permissions),
+    rights,
   };
 }

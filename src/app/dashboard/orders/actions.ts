@@ -47,6 +47,19 @@ export async function reviewPaymentAction(paymentId: string, approve: boolean): 
   return rpc("review_manual_payment", { p_payment: paymentId, p_approve: approve });
 }
 
+export async function placeSupplierOrderAction(a: { orderId: string; supplierId: string; itemIds: string[]; cost: number; expected?: string; note?: string }): Promise<ActionResult> {
+  if (!Number.isFinite(a.cost) || a.cost < 0) return { ok: false, error: "Enter the agreed cost." };
+  return rpc("place_supplier_order", { p_order: a.orderId, p_supplier: a.supplierId, p_items: a.itemIds, p_cost: a.cost, p_expected: a.expected || null, p_note: a.note?.trim() || null });
+}
+
+export async function receiveSupplierOrderAction(id: string): Promise<ActionResult> {
+  return rpc("receive_supplier_order", { p_supplier_order: id, p_receipt: null });
+}
+
+export async function failSupplierOrderAction(id: string, reason: string): Promise<ActionResult> {
+  return rpc("fail_supplier_order", { p_supplier_order: id, p_reason: reason });
+}
+
 export async function addNoteAction(orderId: string, body: string): Promise<ActionResult> {
   const me = await requireStaff();
   if (!isSupabaseConfigured) return { ok: false, error: "Connect Supabase first." };
