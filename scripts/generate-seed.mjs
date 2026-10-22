@@ -4,6 +4,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { availabilityToDb, slugify, audienceToDb } from "../src/lib/catalogue/build.ts";
 import { sampleDefs, variantsOf } from "../src/lib/catalogue/sample.ts";
+import { articles } from "../src/lib/data.ts";
 
 const q = (v) => (v === null || v === undefined ? "null" : `'${String(v).replace(/'/g, "''")}'`);
 const arr = (list) => (list.length ? `array[${list.map(q).join(", ")}]::text[]` : "'{}'::text[]");
@@ -37,6 +38,18 @@ for (const d of sampleDefs) {
   );
 }
 
+out.push("-- Drip School starter articles. Their layout is built into the shop, so they have no body here. Edit or replace them in the dashboard.");
+for (const a of articles) {
+  out.push(
+    `insert into public.articles (slug, title, type, minutes, intro, tone, kind, status, publish_at, author_name)
+` +
+      `values (${q(a.slug)}, ${q(a.title)}, ${q(a.type)}, ${a.minutes}, ${q(a.intro)}, ${q(a.tone)}, ${q(a.kind)}, 'published', now(), 'Drezzy Team')
+` +
+      `on conflict (slug) do nothing;`,
+  );
+}
+out.push("");
+
 const target = fileURLToPath(new URL("../supabase/seed.sql", import.meta.url));
 fs.writeFileSync(target, out.join("\n") + "\n");
-console.log(`Wrote ${target} (${sampleDefs.length} products, ${sampleDefs.reduce((n, d) => n + variantsOf(d).length, 0)} variants)`);
+console.log(`Wrote ${target} (${sampleDefs.length} products, ${articles.length} articles, ${sampleDefs.reduce((n, d) => n + variantsOf(d).length, 0)} variants)`);

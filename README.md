@@ -30,7 +30,9 @@ npm run build
 | Targets, daily reports | Built. Targets are counted from orders, supplier orders and reports; every staff member files a daily report; managers see who has not |
 | Analytics | Built. Sales, new vs repeat customers, best sellers, sources, and a funnel from anonymous shop visits to delivery. Money figures hidden from non-money roles |
 | Salary records | Built. Owner and Finance only; paid salaries are locked and count as money out |
-| Still to build | WhatsApp updates, Drip School CMS, exports, salary records, courier APIs |
+| Data exports | Built. CSV of orders, customers, money and catalogue, limited to what the role may see; every download is logged |
+| Drip School editor | Built. Draft, review, publish or schedule; plain-text articles with a live preview; the shop reads them from the database |
+| Still to build | WhatsApp updates, courier integrations, receipt photo upload for supplier orders, customer accounts with sign-in |
 
 ## Connecting Supabase (about ten minutes)
 

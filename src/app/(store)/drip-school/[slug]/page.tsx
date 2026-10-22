@@ -5,22 +5,29 @@ import type { Metadata } from "next";
 import { ProductArt } from "@/components/ProductArt";
 import { NewsletterForm } from "@/components/store/NewsletterForm";
 import { ShopTheLook } from "@/components/store/ShopTheLook";
+import { parseBody } from "@/lib/articles/format";
+import { getArticles } from "@/lib/articles/server";
 import { availabilitySummary } from "@/lib/catalogue/build";
 import { getCatalogue } from "@/lib/catalogue/server";
-import { articles, formatGHS } from "@/lib/data";
+import { formatGHS } from "@/lib/data";
 
-export function generateStaticParams() {
-  return articles.map((a) => ({ slug: a.slug }));
+export async function generateStaticParams() {
+  try {
+    return (await getArticles()).map((a) => ({ slug: a.slug }));
+  } catch {
+    return []; // the database is unreachable at build time: pages are rendered on first request instead
+  }
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const a = articles.find((x) => x.slug === slug);
-  return a ? { title: a.title } : {};
+  const a = (await getArticles()).find((x) => x.slug === slug);
+  return a ? { title: a.title, description: a.intro } : {};
 }
 
 async function ArticleContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const articles = await getArticles();
   const a = articles.find((x) => x.slug === slug);
   if (!a) notFound();
 
@@ -41,7 +48,14 @@ async function ArticleContent({ params }: { params: Promise<{ slug: string }> })
 
       <p className="mt-6">{a.intro}</p>
 
-      {a.slug === "5-ways-to-wear-nike-dunks" ? (
+      {a.body ? (
+        <div className="mt-4 space-y-4">
+          {parseBody(a.body).map((b, i) =>
+            b.t === "h" ? <h2 key={i} className="mt-8 text-[22px] font-bold">{b.text}</h2>
+            : b.t === "ul" ? <ul key={i} className="list-disc space-y-1 pl-6">{b.items.map((it, j) => <li key={j}>{it}</li>)}</ul>
+            : <p key={i}>{b.text}</p>)}
+        </div>
+      ) : a.slug === "5-ways-to-wear-nike-dunks" ? (
         <>
           <h2 className="mt-8 text-[22px] font-bold">1. Campus casual</h2>
           <p>Wide-leg jeans, a plain tee and a cap. Keep the clothes simple and let the shoes carry the colour.</p>
@@ -69,10 +83,10 @@ async function ArticleContent({ params }: { params: Promise<{ slug: string }> })
         </p>
       )}
 
-      <div className="mt-6 rounded-[12px] bg-lime p-4 text-base text-navy">
+      {!a.body && <div className="mt-6 rounded-[12px] bg-lime p-4 text-base text-navy">
         <p className="font-bold">SIZE TIP</p>
         <p>Dunks run true to size. If you are between sizes, go up half a size for a roomier fit. <Link href="/help/size-guide" className="font-semibold underline">Open the size guide</Link></p>
-      </div>
+      </div>}
 
       <NewsletterForm />
 

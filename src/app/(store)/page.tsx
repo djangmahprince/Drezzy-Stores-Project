@@ -4,7 +4,8 @@ import { ProductArt } from "@/components/ProductArt";
 import { ProductCard } from "@/components/store/ProductCard";
 import type { ArtKind, Tone } from "@/lib/catalogue/types";
 import { getCatalogue } from "@/lib/catalogue/server";
-import { articles, formatGHS } from "@/lib/data";
+import { getArticles } from "@/lib/articles/server";
+import { formatGHS } from "@/lib/data";
 
 const tiles: { label: string; href: string; tone: Tone; kind: ArtKind; upper: string; accent: string }[] = [
   { label: "Sneakers", href: "/shop?category=Sneakers", tone: "navy", kind: "sneaker", upper: "#f4f4f6", accent: "#9cff00" },
@@ -20,7 +21,7 @@ const promises: { icon: IconName; title: string; text: string }[] = [
 ];
 
 export default async function Home() {
-  const products = await getCatalogue();
+  const [products, articles] = await Promise.all([getCatalogue(), getArticles()]);
   const hero = products.find((p) => p.isNew && p.category === "Sneakers") ?? products.find((p) => p.isNew) ?? products[0];
   const fresh = products.filter((p) => p.isNew).concat(products.filter((p) => !p.isNew)).slice(0, 4);
   const best = [...products].sort((a, b) => b.popular - a.popular).slice(0, 4);

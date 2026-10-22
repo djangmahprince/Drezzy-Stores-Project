@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ProductArt } from "@/components/ProductArt";
-import { articles } from "@/lib/data";
+import type { Article } from "@/lib/articles/server";
 
 const tabs = ["All", "Outfit guide", "Trends", "How-to"];
 
-export function DripBrowser() {
+export function DripBrowser({ articles }: { articles: Article[] }) {
   const [tab, setTab] = useState("All");
   const list = articles.filter((a) => tab === "All" || a.type === tab);
   const [featured, ...rest] = list;
-  const art = (a: (typeof articles)[number]) => (
+  const art = (a: Article) => (
     <ProductArt kind={a.kind} tone={a.tone} upper={a.tone === "grey" ? "#00115b" : "#f4f4f6"} accent="#9cff00" label="" className="transition duration-300 group-hover:scale-105" />
   );
 

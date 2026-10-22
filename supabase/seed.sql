@@ -239,3 +239,17 @@ from public.products p, (values
 where p.slug = 'navy-cap'
 on conflict (sku) do nothing;
 
+-- Drip School starter articles. Their layout is built into the shop, so they have no body here. Edit or replace them in the dashboard.
+insert into public.articles (slug, title, type, minutes, intro, tone, kind, status, publish_at, author_name)
+values ('5-ways-to-wear-nike-dunks', '5 ways to wear Nike Dunks', 'Outfit guide', 4, 'Dunks are the easiest sneaker in the rack to style. The shape is clean, the colourways go loud or quiet, and they work from the lecture hall to Friday night. Here are five looks we keep coming back to.', 'navy', 'sneaker', 'published', now(), 'Drezzy Team')
+on conflict (slug) do nothing;
+insert into public.articles (slug, title, type, minutes, intro, tone, kind, status, publish_at, author_name)
+values ('find-your-true-sneaker-size', 'Find your true sneaker size before you order', 'How-to', 3, 'Ordering sneakers online is easy once you know your size. Measure your foot at the end of the day, stand on a sheet of paper, mark the heel and the longest toe, and measure the gap. Then check the fit notes on each product page, because brands run differently.', 'grey', 'sneaker', 'published', now(), 'Drezzy Team')
+on conflict (slug) do nothing;
+insert into public.articles (slug, title, type, minutes, intro, tone, kind, status, publish_at, author_name)
+values ('keep-white-sneakers-white', 'How to keep white sneakers white', 'How-to', 3, 'White sneakers look best when they are cared for early. Wipe them down after each wear with a damp cloth, use a soft brush and mild soap for deeper marks, and let them dry away from direct sun. Never put them in a washing machine.', 'blue', 'sneaker', 'published', now(), 'Drezzy Team')
+on conflict (slug) do nothing;
+insert into public.articles (slug, title, type, minutes, intro, tone, kind, status, publish_at, author_name)
+values ('what-accra-and-kumasi-are-wearing', 'What Accra and Kumasi are wearing this month', 'Trends', 5, 'Clean low-tops, oversized tees and matching sets are everywhere this month, with one bright colour pop on the shoe. Here is what we are seeing on the streets of Accra and Kumasi.', 'charcoal', 'apparel', 'published', now(), 'Drezzy Team')
+on conflict (slug) do nothing;
+
