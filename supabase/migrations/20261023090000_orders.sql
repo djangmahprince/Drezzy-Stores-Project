@@ -723,7 +723,8 @@ begin
       v_row ->> 'id',
       case when v_row ? 'role_id' then (v_row ->> 'role_id') || ':' || coalesce(v_row ->> 'module', '') end,
       case when v_row ? 'variant_id' then (v_row ->> 'variant_id') || ':' || coalesce(v_row ->> 'supplier_id', '') end,
-      v_row ->> 'region'
+      v_row ->> 'region',
+      v_row ->> 'supplier_order_id'
     ),
     v_old, v_new
   );
