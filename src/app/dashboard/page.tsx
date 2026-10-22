@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { PageHead, Pill, Progress } from "@/components/dashboard/DashShell";
+import { HomeLive } from "@/components/dashboard/HomeLive";
 import { PeriodKpis } from "@/components/dashboard/PeriodKpis";
+import { getHome } from "@/lib/dashboard/home";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const stages: [string, number][] = [
   ["Awaiting payment or check", 3], ["To confirm · 2 waiting over 2 hours", 5], ["Getting from supplier", 4],
@@ -11,10 +15,25 @@ const days = [3.1, 2.8, 4.2, 3.6, 4.7, 0, 0];
 
 export const metadata = { title: "Dashboard" };
 
+async function Live() {
+  return <HomeLive d={await getHome()} />;
+}
+
 export default function DashboardHome() {
+  // with Supabase connected the home screen shows real counts; the sample below is only for the design preview
+  return isSupabaseConfigured ? (
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-[12px] bg-white" aria-busy="true" />}>
+      <Live />
+    </Suspense>
+  ) : (
+    <Sample />
+  );
+}
+
+function Sample() {
   return (
     <>
-      <PageHead title="Good morning" sub="How Drezzy is doing this week, both branches" />
+      <PageHead title="Good morning" sub="Sample figures for the design preview. Connect Supabase to see your own." />
       <PeriodKpis />
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
