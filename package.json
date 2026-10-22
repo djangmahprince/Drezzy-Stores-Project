@@ -15,9 +15,10 @@
     "test:payments": "node --no-warnings supabase/tests/payments.test.mjs",
     "test:orders-logic": "node --no-warnings supabase/tests/orders-logic.test.mjs",
     "test:orders-contract": "node --no-warnings supabase/tests/orders-contract.test.mjs",
-    "test": "npm run test:db && npm run test:seed && npm run test:catalogue && npm run test:payments && npm run test:orders-logic && npm run test:orders && npm run test:orders-contract && npm run test:supplier-orders && npm run test:money",
+    "test": "npm run test:db && npm run test:seed && npm run test:catalogue && npm run test:payments && npm run test:orders-logic && npm run test:orders && npm run test:orders-contract && npm run test:supplier-orders && npm run test:money && npm run test:refunds",
     "test:supplier-orders": "node --no-warnings supabase/tests/supplier-orders.test.mjs",
-    "test:money": "node --no-warnings supabase/tests/money.test.mjs"
+    "test:money": "node --no-warnings supabase/tests/money.test.mjs",
+    "test:refunds": "node --no-warnings supabase/tests/refunds.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

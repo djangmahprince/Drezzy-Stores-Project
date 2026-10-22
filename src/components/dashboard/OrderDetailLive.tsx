@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
-  addNoteAction, advanceOrderAction, failSupplierOrderAction, moveBackAction, placeSupplierOrderAction, receiveSupplierOrderAction, recordBalanceAction, recordPaymentAction, reviewPaymentAction, updateDeliveryAction, type ActionResult,
+  addNoteAction, advanceOrderAction, failSupplierOrderAction, moveBackAction, payRefundAction, placeSupplierOrderAction, receiveSupplierOrderAction, recordBalanceAction, recordPaymentAction, requestRefundAction, reviewPaymentAction, reviewRefundAction, updateDeliveryAction, type ActionResult,
 } from "@/app/dashboard/orders/actions";
 import { PageHead, Pill } from "@/components/dashboard/DashShell";
 import { formatGHS } from "@/lib/data";
@@ -31,6 +31,7 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
   const [note, setNote] = useState("");
   const [back, setBack] = useState({ to: "" as Status | "", reason: "" });
   const [pay, setPay] = useState<{ kind: "payment" | "balance" | null; method: "momo" | "cash"; ref: string }>({ kind: null, method: "cash", ref: "" });
+  const [ref, setRef] = useState({ amount: "", reason: "" });
   const [src, setSrc] = useState({ supplier: "", items: [] as string[], cost: "", expected: "", note: "" });
   const [del, setDel] = useState({ courier: d.courier ?? "", tracking: d.tracking ?? "", riderName: d.rider.name ?? "", riderPhone: d.rider.phone ?? "" });
 
@@ -138,6 +139,42 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
             </section>
           )}
 
+          {(d.refunds.length > 0 || (r.canRequestRefund && d.money.paid > 0)) && (
+            <section className="card space-y-3 p-4 text-sm">
+              <h2 className="font-semibold">Refunds</h2>
+              {d.status === "cancelled" && d.money.paid > 0 && d.refunds.length === 0 && <p className="rounded-[12px] bg-card p-3 text-warning">This order was cancelled after payment. Request a refund below.</p>}
+              {d.refunds.map((f) => (
+                <div key={f.id} className="space-y-2 rounded-[12px] bg-card p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span><b>{formatGHS(f.amount)}</b> · {f.reason}<br /><span className="text-xs text-text2">Asked by {f.by ?? "staff"} · {f.at}{f.reviewedBy ? ` · decided by ${f.reviewedBy}` : ""}{f.reviewNote ? ` · ${f.reviewNote}` : ""}</span></span>
+                    <Pill tone={f.status === "paid" ? "ok" : f.status === "rejected" ? "bad" : "warn"}>{f.status === "requested" ? "Waiting for approval" : f.status === "approved" ? "Approved, to pay" : f.status === "paid" ? "Paid back" : "Rejected"}</Pill>
+                  </div>
+                  {f.status === "requested" && r.canApproveRefund && (
+                    <span className="flex gap-2">
+                      <button type="button" disabled={pending} className="btn-primary !min-h-9 text-xs" onClick={() => run(() => reviewRefundAction(f.id, true), "Refund approved.")}>Approve</button>
+                      <button type="button" disabled={pending} className="btn-outline !min-h-9 text-xs" onClick={() => { const why = window.prompt("Why is it rejected?"); if (why) run(() => reviewRefundAction(f.id, false, why), "Refund rejected."); }}>Reject</button>
+                    </span>
+                  )}
+                  {f.status === "approved" && r.canApproveRefund && (
+                    <span className="flex gap-2">
+                      <button type="button" disabled={pending} className="btn-primary !min-h-9 text-xs" onClick={() => { const t = window.prompt("MoMo reference for the refund (leave empty if paid in cash)"); if (t === null) return; run(() => payRefundAction(f.id, t.trim() ? "momo" : "cash", t), "Refund recorded as paid."); }}>Record as paid</button>
+                    </span>
+                  )}
+                </div>
+              ))}
+              {r.canRequestRefund && d.money.paid > 0 && (
+                <div className="space-y-2 rounded-[12px] border border-line p-3">
+                  <p className="font-medium">Request a refund</p>
+                  <div className="grid gap-2 sm:grid-cols-[9rem_1fr]">
+                    <input aria-label="Refund amount" type="number" min={0} placeholder="GHS" className="field !min-h-10" value={ref.amount} onChange={(e) => setRef({ ...ref, amount: e.target.value })} />
+                    <input aria-label="Refund reason" placeholder="Reason" className="field !min-h-10" value={ref.reason} onChange={(e) => setRef({ ...ref, reason: e.target.value })} />
+                  </div>
+                  <button type="button" disabled={pending || !ref.amount || ref.reason.trim().length < 3} className="btn-outline w-full !min-h-10 disabled:opacity-60" onClick={() => run(() => requestRefundAction(d.id, Number(ref.amount), ref.reason), "Refund requested.", () => setRef({ amount: "", reason: "" }))}>Request refund</button>
+                </div>
+              )}
+            </section>
+          )}
+
           <section className="card p-4 text-sm">
             <h2 className="font-semibold">Payments</h2>
             {d.payments.length === 0 ? <p className="mt-2 text-text2">No payments yet.</p> : (
@@ -145,7 +182,7 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
                 {d.payments.map((p) => (
                   <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                     <span>
-                      <b>{formatGHS(p.amount)}</b> · {p.kind === "balance" ? "Balance" : "Checkout"} · {p.method ?? p.provider}
+                      <b>{formatGHS(p.amount)}</b> · {p.kind === "balance" ? "Balance" : p.kind === "refund" ? "Refund" : "Checkout"} · {p.method ?? p.provider}
                       <br /><span className="text-xs text-text2">{p.at} · {p.txn ? `Txn ${p.txn} · ` : ""}{p.reference}</span>
                     </span>
                     <span className="flex items-center gap-2">

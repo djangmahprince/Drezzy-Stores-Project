@@ -60,6 +60,19 @@ export async function failSupplierOrderAction(id: string, reason: string): Promi
   return rpc("fail_supplier_order", { p_supplier_order: id, p_reason: reason });
 }
 
+export async function requestRefundAction(orderId: string, amount: number, reason: string): Promise<ActionResult> {
+  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Enter an amount above zero." };
+  return rpc("request_refund", { p_order: orderId, p_amount: amount, p_reason: reason.trim() });
+}
+
+export async function reviewRefundAction(refundId: string, approve: boolean, note?: string): Promise<ActionResult> {
+  return rpc("review_refund", { p_refund: refundId, p_approve: approve, p_note: note?.trim() || null });
+}
+
+export async function payRefundAction(refundId: string, method: "momo" | "cash", reference?: string): Promise<ActionResult> {
+  return rpc("pay_refund", { p_refund: refundId, p_method: method, p_reference: reference?.trim() || null });
+}
+
 export async function addNoteAction(orderId: string, body: string): Promise<ActionResult> {
   const me = await requireStaff();
   if (!isSupabaseConfigured) return { ok: false, error: "Connect Supabase first." };

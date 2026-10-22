@@ -18,6 +18,10 @@ export type OrderRights = {
   canSource: boolean;
   /** See what suppliers charge. */
   canSeeCosts: boolean;
+  /** Ask for a refund (Customer Support, Finance, Admin, Owner). */
+  canRequestRefund: boolean;
+  /** Approve and pay refunds (Finance, Admin, Owner; not request-only roles). */
+  canApproveRefund: boolean;
 };
 
 const rightsOf = (perms: Parameters<typeof can>[0]): OrderRights => ({
@@ -27,6 +31,8 @@ const rightsOf = (perms: Parameters<typeof can>[0]): OrderRights => ({
   canReviewPayments: can(perms, "expenses", "edit") || can(perms, "orders", "delete"),
   canSource: can(perms, "availability", "edit"),
   canSeeCosts: canSeeCosts(perms),
+  canRequestRefund: can(perms, "refunds", "create") || can(perms, "refunds", "edit"),
+  canApproveRefund: can(perms, "refunds", "edit") && !/^request/i.test(perms.refunds?.restriction ?? ""),
 });
 
 const LIST_SELECT =
@@ -71,6 +77,7 @@ export type OrderDetail = {
   items: { id: string; name: string; label: string; qty: number; unit: number; sourcing: string }[];
   supplierOrders: { id: string; supplier: string; status: string; orderedAt: string; expected: string | null; receivedAt: string | null; itemIds: string[]; cost: number | null; note: string | null }[];
   suppliers: { id: string; name: string }[];
+  refunds: { id: string; amount: number; reason: string; status: string; by: string | null; reviewedBy: string | null; reviewNote: string | null; at: string }[];
   events: { kind: string; status: string | null; at: string; actor: string | null; publicNote: string | null; internalNote: string | null }[];
   payments: { id: string; kind: string; provider: string; method: string | null; reference: string; txn: string | null; amount: number; status: string; at: string }[];
   notes: { author: string | null; body: string; at: string }[];
@@ -93,6 +100,7 @@ type DetailRow = {
   events: { kind: string; status: string | null; at: string; actor_name: string | null; public_note: string | null; internal_note: string | null; id: number }[] | null;
   payments: { id: string; kind: string; provider: string; method: string | null; reference: string; external_ref: string | null; amount: number | string; status: string; created_at: string }[] | null;
   notes: { author_name: string | null; body: string; at: string; id: number }[] | null;
+  refunds: { id: string; amount: number | string; reason: string; status: string; requested_by_name: string | null; reviewed_by_name: string | null; review_note: string | null; created_at: string }[] | null;
 };
 
 export async function getOrderDetail(number: string): Promise<OrderDetail | null> {
@@ -101,7 +109,7 @@ export async function getOrderDetail(number: string): Promise<OrderDetail | null
   const supabase = await createClient();
   const { data } = await supabase
     .from("orders")
-    .select("*, customer:customers(full_name, phone, email), items:order_items(*), events:order_events(*), payments(*), notes:order_notes(*), supplier_orders(*, supplier:suppliers(name), items:supplier_order_items(order_item_id), cost:supplier_order_costs(agreed_cost))")
+    .select("*, customer:customers(full_name, phone, email), items:order_items(*), events:order_events(*), payments(*), notes:order_notes(*), supplier_orders(*, supplier:suppliers(name), items:supplier_order_items(order_item_id), cost:supplier_order_costs(agreed_cost)), refunds(*)")
     .eq("number", number.toUpperCase())
     .maybeSingle();
   if (!data) return null;
@@ -143,6 +151,9 @@ export async function getOrderDetail(number: string): Promise<OrderDetail | null
       };
     }),
     suppliers: (sup ?? []) as { id: string; name: string }[],
+    refunds: [...(r.refunds ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at)).map((f) => ({
+      id: f.id, amount: Number(f.amount), reason: f.reason, status: f.status, by: f.requested_by_name, reviewedBy: f.reviewed_by_name, reviewNote: f.review_note, at: stamp(f.created_at),
+    })),
     events: [...(r.events ?? [])].sort((a, b) => b.id - a.id).map((e) => ({ kind: e.kind, status: e.status, at: stamp(e.at), actor: e.actor_name, publicNote: e.public_note, internalNote: e.internal_note })),
     payments: [...(r.payments ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at)).map((p) => ({
       id: p.id, kind: p.kind, provider: p.provider, method: p.method, reference: p.reference, txn: p.external_ref, amount: Number(p.amount), status: p.status, at: stamp(p.created_at),

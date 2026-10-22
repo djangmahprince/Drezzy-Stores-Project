@@ -24,7 +24,8 @@ npm run build
 | Sprint 3/4: orders, payments, tracker, dispatch | Built. Guest checkout and staff orders are priced by the database; Paystack webhook and manual MoMo; public tracker; dispatch board; order detail |
 | Sourcing: supplier orders | Built. Order from a supplier after payment, receive, or mark failed; costs hidden from roles without money access |
 | Money: ledger, expenses, monthly summary | Built. One ledger over payments, supplier costs and expenses; role category limits |
-| Still to build | Emails and WhatsApp updates, refunds, targets and daily reports, analytics and funnel, Drip School CMS, exports, salary records, courier APIs |
+| Refunds | Built. Support requests, Finance/Admin/Owner approve and pay (not their own request); shown as money out |
+| Still to build | Emails and WhatsApp updates, targets and daily reports, analytics and funnel, Drip School CMS, exports, salary records, courier APIs |
 
 ## Connecting Supabase (about ten minutes)
 
