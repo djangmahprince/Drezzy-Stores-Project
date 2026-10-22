@@ -62,6 +62,7 @@ export const dashNav: { href: string; label: string; modules: Module[] }[] = [
   { href: "/dashboard/money", label: "Money", modules: ["expenses", "salary"] },
   { href: "/dashboard/analytics", label: "Analytics", modules: ["analytics"] },
   { href: "/dashboard/content", label: "Drip School and content", modules: ["content"] },
+  { href: "/dashboard/exports", label: "Exports", modules: ["exports"] },
   { href: "/dashboard/settings", label: "Settings", modules: ["settings", "staff", "audit"] },
 ];
 
