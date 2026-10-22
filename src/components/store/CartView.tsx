@@ -5,12 +5,14 @@ import { Icon } from "@/components/Icon";
 import { ProductArt } from "@/components/ProductArt";
 import { QtyStepper } from "@/components/store/CartDrawer";
 import { computeTotals, removeLine, setQty, setRegion, usePricedCart } from "@/lib/cart";
-import { formatGHS, getZone, zones } from "@/lib/data";
+import { useCatalogue } from "@/components/CatalogueProvider";
+import { formatGHS } from "@/lib/data";
 
 export function CartView() {
   const { region, priced } = usePricedCart();
-  const t = computeTotals(priced, region, "home", "full");
-  const zone = getZone(region);
+  const { zones, zone: zoneOf } = useCatalogue();
+  const zone = zoneOf(region);
+  const t = computeTotals(priced, zone, "home", "full");
 
   if (priced.length === 0) {
     return (

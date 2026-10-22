@@ -26,6 +26,7 @@ npm run build
 | Money: ledger, expenses, monthly summary | Built. One ledger over payments, supplier costs and expenses; role category limits |
 | Refunds | Built. Support requests, Finance/Admin/Owner approve and pay (not their own request); shown as money out |
 | Customer emails | Built. The database queues one email per customer-facing order update; `/api/notifications/run` sends them through Resend every 5 minutes (needs `RESEND_API_KEY`, `NOTIFY_FROM`, `CRON_SECRET`) |
+| Delivery zones | Built. Settings edits fee, days, half payment and on/off; the shop, cart and checkout read the database zones |
 | Still to build | WhatsApp updates, targets and daily reports, analytics and funnel, Drip School CMS, exports, salary records, courier APIs |
 
 ## Connecting Supabase (about ten minutes)

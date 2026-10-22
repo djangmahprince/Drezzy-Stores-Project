@@ -3,7 +3,7 @@
 import { useCatalogue } from "@/components/CatalogueProvider";
 import { findVariant } from "@/lib/catalogue/build";
 import type { Product } from "@/lib/catalogue/types";
-import { getZone } from "@/lib/data";
+import type { Zone } from "@/lib/data";
 import { createStore, useStore } from "@/lib/store";
 
 export type CartLine = {
@@ -95,8 +95,7 @@ export type Totals = {
  * Payment rules from the PRD (section 9): Accra addresses (and Accra pickup) may pay half now and half on
  * delivery, everywhere else pays in full. The delivery fee is part of the amount paid at checkout.
  */
-export function computeTotals(lines: PricedLine[], region: string, method: Method, plan: Plan): Totals {
-  const zone = getZone(region);
+export function computeTotals(lines: PricedLine[], zone: Zone | undefined, method: Method, plan: Plan): Totals {
   const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0);
   const fee = lines.length === 0 || method === "pickup" ? 0 : (zone?.fee ?? 0);
   const total = subtotal + fee;

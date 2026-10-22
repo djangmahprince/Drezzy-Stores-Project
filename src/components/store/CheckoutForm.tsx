@@ -9,7 +9,8 @@ import { PaymentFlow } from "@/components/store/PaymentFlow";
 import type { PaymentOptions } from "@/lib/payments/config";
 import type { PayChoice, PlaceResult } from "@/lib/orders/types";
 import { clearCart, computeTotals, setRegion, usePricedCart, type Method, type Plan } from "@/lib/cart";
-import { branches, formatGHS, getZone, sources, zones } from "@/lib/data";
+import { useCatalogue } from "@/components/CatalogueProvider";
+import { branches, formatGHS, sources } from "@/lib/data";
 import { isGhanaPhone, placeOrder, rememberOrder, type PlacedOrder } from "@/lib/orders";
 
 type Pay = PayChoice;
@@ -127,9 +128,10 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((p) => ({ ...p, [k]: v }));
   const activeRegion = f.method === "pickup" ? "Greater Accra" : region;
-  const t = computeTotals(priced, activeRegion, f.method, f.plan);
+  const { zones, zone: zoneOf } = useCatalogue();
+  const t = computeTotals(priced, zoneOf(activeRegion), f.method, f.plan);
   const plan: Plan = t.canSplit ? f.plan : "full";
-  const totals = computeTotals(priced, activeRegion, f.method, plan);
+  const totals = computeTotals(priced, zoneOf(activeRegion), f.method, plan);
   const errors = useMemo(() => validate(f), [f]);
   const show = (k: string) => (attempted || touched[k] ? errors[k] : undefined);
   const touch = (k: string) => () => setTouched((p) => ({ ...p, [k]: true }));
@@ -337,7 +339,7 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
 
           <Step n={2} title="Delivery" done={placeDone && (attempted || !!touched.street)}>
             <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Delivery method">
-              <Choice id="m-home" name="method" checked={f.method === "home"} onSelect={() => set("method", "home")} title="Home delivery" note={`About ${totals.days} ${totals.days === 1 ? "day" : "days"}, including getting it from our supplier`} right={formatGHS(getZone(region)?.fee ?? 0)} />
+              <Choice id="m-home" name="method" checked={f.method === "home"} onSelect={() => set("method", "home")} title="Home delivery" note={`About ${totals.days} ${totals.days === 1 ? "day" : "days"}, including getting it from our supplier`} right={formatGHS(zoneOf(region)?.fee ?? 0)} />
               <Choice id="m-pickup" name="method" checked={f.method === "pickup"} onSelect={() => set("method", "pickup")} title="Pick up at the Accra branch" note="We message you when it is ready" right="Free" />
             </div>
 

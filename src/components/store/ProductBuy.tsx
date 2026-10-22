@@ -7,7 +7,8 @@ import { WishlistButton } from "@/components/store/WishlistButton";
 import { variantsFor } from "@/lib/catalogue/build";
 import type { Availability, Product } from "@/lib/catalogue/types";
 import { addToCart, setRegion, useCart } from "@/lib/cart";
-import { branches, formatGHS, getZone, zones } from "@/lib/data";
+import { useCatalogue } from "@/components/CatalogueProvider";
+import { branches, formatGHS } from "@/lib/data";
 
 const swatch = (name: string) => {
   const n = name.toLowerCase();
@@ -33,7 +34,8 @@ export function ProductBuy({ product: p }: { product: Product }) {
   const [shared, setShared] = useState(false);
   const { region } = useCart();
 
-  const zone = getZone(region);
+  const { zones, zone: zoneOf } = useCatalogue();
+  const zone = zoneOf(region);
   // The sizes, price and lead time depend on the style and colour picked: each combination is its own variant.
   const options = variantsFor(p, { style, colour });
   const open = (sz: string) => options.some((v) => v.size === sz && v.availability !== "Unavailable");

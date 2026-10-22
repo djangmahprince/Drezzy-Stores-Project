@@ -4,11 +4,12 @@ import { PageHead } from "@/components/dashboard/DashShell";
 import { Guard } from "@/components/dashboard/Guard";
 import { getSellableProducts } from "@/lib/catalogue/staff";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getZones } from "@/lib/zones";
 
 export const metadata = { title: "Create order" };
 
 async function Form() {
-  return <CreateOrderForm products={await getSellableProducts()} live={isSupabaseConfigured} />;
+  return <CreateOrderForm products={await getSellableProducts()} zones={await getZones()} live={isSupabaseConfigured} />;
 }
 
 export default function NewOrder() {

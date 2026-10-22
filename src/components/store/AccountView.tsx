@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { trackOrderAction } from "@/app/(store)/checkout/actions";
 import { Icon } from "@/components/Icon";
 import { ProductCard } from "@/components/store/ProductCard";
 import { useWishlist } from "@/lib/cart";
@@ -10,6 +11,17 @@ import { formatGHS } from "@/lib/data";
 import { useOrders } from "@/lib/orders";
 
 type Tab = "orders" | "wishlist" | "signin";
+
+/** The order's live status from the tracker. Shows "Order placed" until the lookup answers, or when tracking is not connected. */
+function StatusChip({ number, phone }: { number: string; phone: string }) {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    trackOrderAction({ number, phone }).then((r) => { if (live && r.ok) setText(r.track.headline); }).catch(() => {});
+    return () => { live = false; };
+  }, [number, phone]);
+  return <span className="chip bg-[#e6eaf8] text-navy" aria-live="polite">{text ?? "Order placed"}</span>;
+}
 
 export function AccountView() {
   const [tab, setTab] = useState<Tab>("orders");
@@ -65,7 +77,7 @@ export function AccountView() {
                 <li key={o.id} className="card p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-semibold">{o.id}</p>
-                    <span className="chip bg-[#e6eaf8] text-navy">Payment confirmed</span>
+                    <StatusChip number={o.id} phone={o.phone} />
                   </div>
                   <p className="mt-1 text-sm text-text2">{o.items.map((i) => i.name).join(", ")}</p>
                   <p className="mt-2 flex justify-between text-sm"><span>Paid {formatGHS(o.paid)}</span>{o.balance > 0 && <span className="font-medium text-warning">Balance {formatGHS(o.balance)} on delivery</span>}</p>

@@ -7,7 +7,7 @@ import { createStaffOrderAction } from "@/app/dashboard/orders/actions";
 import { createDashOrder } from "@/lib/dash";
 import { findVariant, variantsFor } from "@/lib/catalogue/build";
 import type { Product } from "@/lib/catalogue/types";
-import { formatGHS, getZone, sources, zones } from "@/lib/data";
+import { formatGHS, sources, type Zone } from "@/lib/data";
 import { searchProducts } from "@/lib/search";
 
 type Line = { product: Product; style?: string; colour: string; size: string; qty: number };
@@ -22,7 +22,7 @@ const channelDb = { WhatsApp: "whatsapp", Phone: "phone", "Instagram DM": "insta
 type Created = { id: string; items: string };
 
 /** `live` is true when the database is connected: orders are then created for real and priced by the database. */
-export function CreateOrderForm({ products, live = false }: { products: Product[]; live?: boolean }) {
+export function CreateOrderForm({ products, zones, live = false }: { products: Product[]; zones: Zone[]; live?: boolean }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [region, setRegion] = useState("Greater Accra");
@@ -43,7 +43,7 @@ export function CreateOrderForm({ products, live = false }: { products: Product[
   const [done, setDone] = useState<Created | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const zone = getZone(region);
+  const zone = zones.find((z) => z.region === region);
   const results = q.trim() ? searchProducts(products, q).slice(0, 5) : [];
   const subtotal = lines.reduce((s, l) => s + (variantOf(l)?.price ?? l.product.price) * l.qty, 0);
   const fee = lines.length && !pickup ? (zone?.fee ?? 0) : 0;

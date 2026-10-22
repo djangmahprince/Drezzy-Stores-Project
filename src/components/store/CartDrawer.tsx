@@ -5,7 +5,8 @@ import { useEffect } from "react";
 import { Icon } from "@/components/Icon";
 import { ProductArt } from "@/components/ProductArt";
 import { closeDrawer, computeTotals, removeLine, setQty, usePricedCart, useDrawerOpen } from "@/lib/cart";
-import { formatGHS, getZone } from "@/lib/data";
+import { useCatalogue } from "@/components/CatalogueProvider";
+import { formatGHS } from "@/lib/data";
 
 export function QtyStepper({ qty, onChange, label }: { qty: number; onChange: (n: number) => void; label: string }) {
   return (
@@ -30,7 +31,8 @@ export function QtyStepper({ qty, onChange, label }: { qty: number; onChange: (n
 export function CartDrawer() {
   const open = useDrawerOpen();
   const { region, priced } = usePricedCart();
-  const t = computeTotals(priced, region, "home", "full");
+  const { zone } = useCatalogue();
+  const t = computeTotals(priced, zone(region), "home", "full");
 
   useEffect(() => {
     if (!open) return;
@@ -96,7 +98,7 @@ export function CartDrawer() {
                 <p className="flex justify-between"><span>Subtotal</span><span>{formatGHS(t.subtotal)}</span></p>
                 <p className="flex justify-between text-text2">
                   <span>Delivery to {region}</span>
-                  <span>{getZone(region) ? formatGHS(t.fee) : "Confirmed at checkout"}</span>
+                  <span>{zone(region) ? formatGHS(t.fee) : "Confirmed at checkout"}</span>
                 </p>
                 <p className="flex justify-between pt-1 text-base font-bold"><span>Total</span><span>{formatGHS(t.total)}</span></p>
               </div>
