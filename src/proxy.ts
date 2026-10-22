@@ -37,5 +37,5 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-// Only the staff area needs a session. The public storefront is untouched, so it stays fast and cacheable.
-export const config = { matcher: ["/dashboard/:path*", "/login/:path*"] };
+// The staff area needs a session, and /account keeps a shopper's sign-in fresh. The rest of the storefront is untouched, so it stays fast and cacheable.
+export const config = { matcher: ["/dashboard/:path*", "/login/:path*", "/account/:path*", "/account"] };

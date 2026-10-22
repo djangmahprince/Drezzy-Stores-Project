@@ -33,7 +33,9 @@ npm run build
 | Data exports | Built. CSV of orders, customers, money and catalogue, limited to what the role may see; every download is logged |
 | Drip School editor | Built. Draft, review, publish or schedule; plain-text articles with a live preview; the shop reads them from the database |
 | Receipts | Built. Photo or PDF of a supplier receipt goes to a private bucket; only roles that see supplier costs can open it |
-| Still to build | WhatsApp updates, courier integrations, customer accounts with sign-in |
+| Customer accounts | Built. Optional sign-up with email confirmation; a confirmed email links earlier guest orders; order history on any device. Turn on email confirmation in Supabase Auth settings |
+| WhatsApp | Click-to-chat messages written for each order stage (automatic sending needs the WhatsApp Business API) |
+| Still to build | Courier integrations (needs the courier you will use), automatic WhatsApp sending |
 
 ## Connecting Supabase (about ten minutes)
 
