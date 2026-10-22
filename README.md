@@ -10,6 +10,7 @@ npm run lint
 npm run test:db        # database security rules (no Supabase needed)
 npm run test:catalogue # catalogue and spreadsheet-import logic
 npm run test:seed      # the seed loads cleanly and matches the demo catalogue
+npm test               # every suite: database rules, orders, payments, sourcing, money, catalogue logic
 npm run build
 ```
 
@@ -20,7 +21,10 @@ npm run build
 | Storefront and dashboard UI | Interactive prototype on sample data (cart, checkout rules, tracker, dispatch board, catalogue, orders) |
 | Sprint 1: identity, roles, audit | Built. Needs a Supabase project to run for real (below) |
 | Sprint 2: catalogue, variants, suppliers, availability, Excel import | Built. Storefront and dashboard read it from Supabase, or show the sample catalogue until connected |
-| Sprint 3 onward: orders in the database, Paystack, dispatch, money, targets | Not started |
+| Sprint 3/4: orders, payments, tracker, dispatch | Built. Guest checkout and staff orders are priced by the database; Paystack webhook and manual MoMo; public tracker; dispatch board; order detail |
+| Sourcing: supplier orders | Built. Order from a supplier after payment, receive, or mark failed; costs hidden from roles without money access |
+| Money: ledger, expenses, monthly summary | Built. One ledger over payments, supplier costs and expenses; role category limits |
+| Still to build | Emails and WhatsApp updates, refunds, targets and daily reports, analytics and funnel, Drip School CMS, exports, salary records, courier APIs |
 
 ## Connecting Supabase (about ten minutes)
 
@@ -61,7 +65,13 @@ changes appear immediately. Without Supabase it shows the sample catalogue in `s
 
 ## Things to know
 
-- The service-role key bypasses security. It is used in exactly two places: creating a login (`src/lib/supabase/admin.ts`)
-  and `scripts/create-owner.mjs`. Data writes use the signed-in user's own session so the audit log records who did it.
-- Checkout is a demo until Paystack is connected (sprint 4): it shows a banner and takes no money.
+- The service-role key bypasses security. Data writes use the signed-in user's own session so the audit log records who did it.
+- Checkout is a demo until Supabase is connected. Once it is, orders are real, and payment options follow the server's settings:
+  Paystack (MoMo prompts and cards) when `PAYSTACK_SECRET_KEY` is set, manual MoMo when `DREZZY_MOMO_NUMBER` is set.
+  Orders are only marked paid by the signed webhook at `/api/payments/paystack/webhook` (set that URL in the Paystack dashboard)
+  or by Finance checking a manual payment. The Paystack request formats were written from its public docs and have not been run
+  against a live account: test with a Paystack test key and small real payments before launch (PRD launch checklist).
+- The service-role key is used in three places: creating a login, the owner script, and the payment webhook.
+- Money is stored as exact decimals in cedis (numeric 12,2) rather than integer pesewas as the PRD suggests. It is equally exact.
+- Order lookups and payment retries are rate-limited in memory per server instance: best effort, not a guarantee.
 - Prices marked `// sample` and all delivery fees in `src/lib/data.ts` are defaults until the owner confirms them.

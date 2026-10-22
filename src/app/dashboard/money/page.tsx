@@ -1,13 +1,17 @@
+import { Suspense } from "react";
 import { Guard } from "@/components/dashboard/Guard";
+import { MoneyLive } from "@/components/dashboard/MoneyLive";
+import { getMoney } from "@/lib/money/staff";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { Kpi, PageHead, Pill, Progress, Table } from "@/components/dashboard/DashShell";
 
 export const metadata = { title: "Money" };
 
 const out: [string, number][] = [["Supplier costs", 13900], ["Salaries", 2400], ["Delivery and riders", 820], ["Ads and promotion", 600], ["Refunds", 450]];
 
-export default function Money() {
+function Sample() {
   return (
-    <Guard module={["expenses", "salary"]}>
+    <>
       <PageHead title="Money" sub="Every cedi in and out. Payments, supplier costs and refunds are recorded automatically; expenses are added here."
         actions={<><button className="btn-outline">Export</button><button className="btn-primary">Add expense</button></>} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
@@ -44,6 +48,30 @@ export default function Money() {
           </section>
         </div>
       </div>
+    </>
+  );
+}
+
+async function Live({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+  const { month } = await searchParams;
+  const now = new Date();
+  const valid = month && /^\d{4}-(0[1-9]|1[0-2])$/.test(month) ? month : `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  return <MoneyLive d={await getMoney(valid)} />;
+}
+
+export default function Money({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+  return (
+    <Guard module={["expenses", "salary"]}>
+      {isSupabaseConfigured ? (
+        <>
+          <PageHead real title="Money" sub="Every cedi in and out. Payments and supplier costs are recorded automatically; expenses are added here." />
+          <Suspense fallback={<div className="h-64 animate-pulse rounded-[12px] bg-white" aria-busy="true" />}>
+            <Live searchParams={searchParams} />
+          </Suspense>
+        </>
+      ) : (
+        <Sample />
+      )}
     </Guard>
   );
 }
