@@ -8,6 +8,7 @@ import {
 } from "@/app/dashboard/orders/actions";
 import { PageHead, Pill } from "@/components/dashboard/DashShell";
 import { formatGHS } from "@/lib/data";
+import { whatsappLink, whatsappText } from "@/lib/notify/whatsapp";
 import { stages, statusFromDb, stageTitle, type Status } from "@/lib/orders/dash-types";
 import type { OrderDetail } from "@/lib/orders/staff";
 
@@ -73,6 +74,10 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
               <h2 className="font-semibold">Customer</h2>
               <p className="mt-1">{d.customer.name}</p>
               <p className="text-text2">{d.customer.phone}{d.customer.email ? ` · ${d.customer.email}` : ""}</p>
+              {(() => {
+                const wa = whatsappLink(d.customer.phone, whatsappText({ number: d.number, name: d.customer.name, status: d.status, total: d.money.total, paid: d.money.paid, balance: d.money.balance, method: d.method, riderName: d.rider.name, riderPhone: d.rider.phone }));
+                return wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-navy underline">Message on WhatsApp</a> : null;
+              })()}
               {d.source && <p className="mt-1 text-xs text-text2">Heard of Drezzy: {d.source}</p>}
             </div>
             <div>
