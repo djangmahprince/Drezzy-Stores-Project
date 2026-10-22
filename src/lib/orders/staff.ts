@@ -75,7 +75,7 @@ export type OrderDetail = {
   estDelivery: string | null;
   money: { subtotal: number; fee: number; discount: number; discountReason: string | null; total: number; paid: number; balance: number };
   items: { id: string; name: string; label: string; qty: number; unit: number; sourcing: string }[];
-  supplierOrders: { id: string; supplier: string; status: string; orderedAt: string; expected: string | null; receivedAt: string | null; itemIds: string[]; cost: number | null; note: string | null }[];
+  supplierOrders: { id: string; supplier: string; status: string; orderedAt: string; expected: string | null; receivedAt: string | null; itemIds: string[]; cost: number | null; note: string | null; hasReceipt: boolean }[];
   suppliers: { id: string; name: string }[];
   refunds: { id: string; amount: number; reason: string; status: string; by: string | null; reviewedBy: string | null; reviewNote: string | null; at: string }[];
   events: { kind: string; status: string | null; at: string; actor: string | null; publicNote: string | null; internalNote: string | null }[];
@@ -96,7 +96,7 @@ type DetailRow = {
   rider_name: string | null; rider_phone: string | null; est_delivery_date: string | null;
   customer: { full_name: string; phone: string; email: string | null } | { full_name: string; phone: string; email: string | null }[] | null;
   items: { id: string; product_name: string; variant_label: string; qty: number; unit_price: number | string; sourcing: string }[] | null;
-  supplier_orders: { id: string; status: string; ordered_at: string; expected_at: string | null; received_at: string | null; note: string | null; supplier: { name: string } | { name: string }[] | null; items: { order_item_id: string }[] | null; cost: { agreed_cost: number | string } | { agreed_cost: number | string }[] | null }[] | null;
+  supplier_orders: { id: string; status: string; receipt_path: string | null; ordered_at: string; expected_at: string | null; received_at: string | null; note: string | null; supplier: { name: string } | { name: string }[] | null; items: { order_item_id: string }[] | null; cost: { agreed_cost: number | string } | { agreed_cost: number | string }[] | null }[] | null;
   events: { kind: string; status: string | null; at: string; actor_name: string | null; public_note: string | null; internal_note: string | null; id: number }[] | null;
   payments: { id: string; kind: string; provider: string; method: string | null; reference: string; external_ref: string | null; amount: number | string; status: string; created_at: string }[] | null;
   notes: { author_name: string | null; body: string; at: string; id: number }[] | null;
@@ -147,7 +147,7 @@ export async function getOrderDetail(number: string): Promise<OrderDetail | null
       const cost = first(s.cost);
       return {
         id: s.id, supplier: first(s.supplier)?.name ?? "Supplier", status: s.status, orderedAt: stamp(s.ordered_at), expected: s.expected_at,
-        receivedAt: s.received_at ? stamp(s.received_at) : null, itemIds: (s.items ?? []).map((x) => x.order_item_id), cost: cost ? Number(cost.agreed_cost) : null, note: s.note,
+        receivedAt: s.received_at ? stamp(s.received_at) : null, itemIds: (s.items ?? []).map((x) => x.order_item_id), cost: cost ? Number(cost.agreed_cost) : null, note: s.note, hasReceipt: !!s.receipt_path,
       };
     }),
     suppliers: (sup ?? []) as { id: string; name: string }[],

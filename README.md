@@ -32,7 +32,8 @@ npm run build
 | Salary records | Built. Owner and Finance only; paid salaries are locked and count as money out |
 | Data exports | Built. CSV of orders, customers, money and catalogue, limited to what the role may see; every download is logged |
 | Drip School editor | Built. Draft, review, publish or schedule; plain-text articles with a live preview; the shop reads them from the database |
-| Still to build | WhatsApp updates, courier integrations, receipt photo upload for supplier orders, customer accounts with sign-in |
+| Receipts | Built. Photo or PDF of a supplier receipt goes to a private bucket; only roles that see supplier costs can open it |
+| Still to build | WhatsApp updates, courier integrations, customer accounts with sign-in |
 
 ## Connecting Supabase (about ten minutes)
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
-  addNoteAction, advanceOrderAction, failSupplierOrderAction, moveBackAction, payRefundAction, placeSupplierOrderAction, receiveSupplierOrderAction, recordBalanceAction, recordPaymentAction, requestRefundAction, reviewPaymentAction, reviewRefundAction, updateDeliveryAction, type ActionResult,
+  addNoteAction, advanceOrderAction, attachReceiptAction, receiptLinkAction, receiveSupplierOrderWithReceiptAction, failSupplierOrderAction, moveBackAction, payRefundAction, placeSupplierOrderAction, recordBalanceAction, recordPaymentAction, requestRefundAction, reviewPaymentAction, reviewRefundAction, updateDeliveryAction, type ActionResult,
 } from "@/app/dashboard/orders/actions";
 import { PageHead, Pill } from "@/components/dashboard/DashShell";
 import { formatGHS } from "@/lib/data";
@@ -31,6 +31,7 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
   const [note, setNote] = useState("");
   const [back, setBack] = useState({ to: "" as Status | "", reason: "" });
   const [pay, setPay] = useState<{ kind: "payment" | "balance" | null; method: "momo" | "cash"; ref: string }>({ kind: null, method: "cash", ref: "" });
+  const [files, setFiles] = useState<Record<string, File | null>>({});
   const [ref, setRef] = useState({ amount: "", reason: "" });
   const [src, setSrc] = useState({ supplier: "", items: [] as string[], cost: "", expected: "", note: "" });
   const [del, setDel] = useState({ courier: d.courier ?? "", tracking: d.tracking ?? "", riderName: d.rider.name ?? "", riderPhone: d.rider.phone ?? "" });
@@ -112,9 +113,20 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
               {d.supplierOrders.map((s) => (
                 <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] bg-card p-3">
                   <span><b>{s.supplier}</b> · {s.status}{s.cost !== null ? ` · ${formatGHS(s.cost)}` : ""}<br /><span className="text-xs text-text2">Ordered {s.orderedAt}{s.expected ? ` · expected ${s.expected}` : ""}{s.receivedAt ? ` · received ${s.receivedAt}` : ""}</span></span>
+                  {(s.status === "ordered" || s.status === "received") && r.canSource && !s.hasReceipt && (
+                    <label className="flex w-full items-center gap-2 text-xs text-text2">Receipt (optional)
+                      <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" aria-label={`Receipt for ${s.supplier}`} onChange={(e) => setFiles((f) => ({ ...f, [s.id]: e.target.files?.[0] ?? null }))} />
+                    </label>
+                  )}
+                  {s.hasReceipt && r.canSeeCosts && (
+                    <button type="button" disabled={pending} className="text-xs font-semibold text-navy underline" onClick={() => start(async () => { const res = await receiptLinkAction(s.id); if (res.ok) window.open(res.url, "_blank", "noopener"); else setMsg({ text: res.error, bad: true }); })}>View receipt</button>
+                  )}
+                  {s.status === "received" && r.canSource && !s.hasReceipt && files[s.id] && (
+                    <button type="button" disabled={pending} className="btn-outline !min-h-9 text-xs" onClick={() => { const fd = new FormData(); fd.set("id", s.id); fd.set("receipt", files[s.id]!); run(() => attachReceiptAction(fd), "Receipt attached."); }}>Attach receipt</button>
+                  )}
                   {s.status === "ordered" && r.canSource && (
                     <span className="flex gap-2">
-                      <button type="button" disabled={pending} className="btn-primary !min-h-9 text-xs" onClick={() => run(() => receiveSupplierOrderAction(s.id), "Marked as received.")}>Mark received</button>
+                      <button type="button" disabled={pending} className="btn-primary !min-h-9 text-xs" onClick={() => { const fd = new FormData(); fd.set("id", s.id); if (files[s.id]) fd.set("receipt", files[s.id]!); run(() => receiveSupplierOrderWithReceiptAction(fd), "Marked as received."); }}>Mark received</button>
                       <button type="button" disabled={pending} className="btn-outline !min-h-9 text-xs" onClick={() => { const why = window.prompt("Why could the supplier not provide it?"); if (why) run(() => failSupplierOrderAction(s.id, why), "Marked as failed. You can try another supplier."); }}>Could not source</button>
                     </span>
                   )}

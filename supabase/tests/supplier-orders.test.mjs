@@ -58,7 +58,7 @@ await asRole("anon", async () => ok("shoppers cannot read supplier orders", !(aw
 await as("sourcing", async () => ok("rows cannot be edited directly", ((await tryQ("update public.supplier_orders set status = 'received'")).n ?? 0) === 0));
 
 // receiving
-ok("receiving moves the order to ready to pack", (await as("sourcing", () => tryQ("select public.receive_supplier_order($1, 'receipts/inv-1.jpg')", [soId]))).ok && (await status(o1.id)) === "ready_to_pack");
+ok("receiving moves the order to ready to pack", (await as("sourcing", () => tryQ("select public.receive_supplier_order($1, $2)", [soId, soId + '/inv-1.jpg']))).ok && (await status(o1.id)) === "ready_to_pack");
 ok("its item is marked received", (await itemsOf(o1.id))[0].sourcing === "received");
 ok("a supplier order cannot be received twice", !(await as("sourcing", () => tryQ("select public.receive_supplier_order($1)", [soId]))).ok);
 const pub2 = (await asRole("anon", () => tryQ("select public.track_order($1,'0240000001') as r", [o1.number]))).rows[0].r;

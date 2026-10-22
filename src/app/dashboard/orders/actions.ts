@@ -56,6 +56,56 @@ export async function receiveSupplierOrderAction(id: string): Promise<ActionResu
   return rpc("receive_supplier_order", { p_supplier_order: id, p_receipt: null });
 }
 
+const RECEIPT_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf" };
+
+/** Checks a chosen receipt and uploads it to the private bucket. Returns the stored path, or a plain-English problem. */
+async function uploadReceipt(supplierOrderId: string, file: File): Promise<{ path: string } | { error: string }> {
+  const ext = RECEIPT_TYPES[file.type];
+  if (!ext) return { error: "Choose a photo (JPG, PNG, WebP) or a PDF." };
+  if (file.size > 5 * 1024 * 1024) return { error: "That file is over 5 MB. Choose a smaller photo." };
+  const path = `${supplierOrderId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await (await createClient()).storage.from("receipts").upload(path, file, { contentType: file.type, upsert: false });
+  return error ? { error: "The receipt could not be uploaded. Please try again." } : { path };
+}
+
+/** Marks a supplier order received, with the receipt photo if one was chosen. The file goes up first so a failed upload leaves the order untouched. */
+export async function receiveSupplierOrderWithReceiptAction(fd: FormData): Promise<ActionResult> {
+  if (!isSupabaseConfigured) return { ok: false, error: "Connect Supabase first." };
+  await requireStaff();
+  const id = String(fd.get("id") ?? "");
+  const file = fd.get("receipt");
+  let path: string | null = null;
+  if (file instanceof File && file.size > 0) {
+    const up = await uploadReceipt(id, file);
+    if ("error" in up) return { ok: false, error: up.error };
+    path = up.path;
+  }
+  const { error } = await (await createClient()).rpc("receive_supplier_order", { p_supplier_order: id, p_receipt: path });
+  return error ? say(error) : done;
+}
+
+export async function attachReceiptAction(fd: FormData): Promise<ActionResult> {
+  if (!isSupabaseConfigured) return { ok: false, error: "Connect Supabase first." };
+  await requireStaff();
+  const id = String(fd.get("id") ?? "");
+  const file = fd.get("receipt");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "Choose a receipt first." };
+  const up = await uploadReceipt(id, file);
+  if ("error" in up) return { ok: false, error: up.error };
+  const { error } = await (await createClient()).rpc("attach_receipt", { p_supplier_order: id, p_path: up.path });
+  return error ? say(error) : done;
+}
+
+/** A link to the receipt that works for one minute. Only people who may see supplier costs get one. */
+export async function receiptLinkAction(id: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  await requireStaff();
+  const supabase = await createClient();
+  const { data } = await supabase.from("supplier_orders").select("receipt_path").eq("id", id).maybeSingle();
+  if (!data?.receipt_path) return { ok: false, error: "There is no receipt for this supplier order." };
+  const signed = await supabase.storage.from("receipts").createSignedUrl(data.receipt_path as string, 60);
+  return signed.data?.signedUrl ? { ok: true, url: signed.data.signedUrl } : { ok: false, error: "You cannot open this receipt." };
+}
+
 export async function failSupplierOrderAction(id: string, reason: string): Promise<ActionResult> {
   return rpc("fail_supplier_order", { p_supplier_order: id, p_reason: reason });
 }
