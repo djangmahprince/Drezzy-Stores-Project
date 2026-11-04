@@ -19,6 +19,10 @@ export type TeamData = {
   weekStart: string;
   myDay: { plan: string[] | null; yesterday: { summary: string } | null; labels: string[]; report: { checkins: Record<string, number> } | null; open_tasks: { to_confirm: number; to_source: number; to_pack: number; unread: number } } | null;
   leaderboards: { role: string; name: string; rows: { name: string; value: number }[] }[];
+  /** Reports filed against reports expected, Monday to yesterday. Managers only. */
+  week: { filed: number; expected: number };
+  /** The last few working days per person, oldest first: did they file? Managers only. */
+  dots: Record<string, boolean[]>;
 };
 
 type ProgressJson = { id: string; staff_id: string | null; staff: string; metric: string; goal: number | string; actual: number | string; from: string; to: string; note: string | null; elapsed: number | string; weight?: number | string; status?: string; label?: string | null };
@@ -47,6 +51,14 @@ export async function getTeam(): Promise<TeamData> {
     canSet ? supabase.from("roles").select("key, name").order("name") : Promise.resolve({ data: [] }),
     supabase.from("app_settings").select("value").eq("key", "leaderboard").maybeSingle(),
   ]);
+  // this week's reports, one call per day that has finished
+  const days = Array.from({ length: dow }, (_, i) => iso(new Date(Date.parse(weekStart) + i * 86_400_000)));
+  const past = canSet ? await Promise.all(days.map((day) => supabase.rpc("report_status", { p_date: day }))) : [];
+  const dots: Record<string, boolean[]> = {};
+  let filed = 0, expected = 0;
+  for (const r of past) for (const row of (r.data ?? []) as StatusJson[]) { expected++; if (row.filed) filed++; (dots[row.staff_id] ??= []).push(row.filed); }
+  for (const id of Object.keys(dots)) dots[id] = dots[id].slice(-5);
+
   const lbRoles = ((lbSetting.data?.value as { roles?: string[] } | undefined)?.roles ?? []);
   const leaderboards = await Promise.all(lbRoles.map(async (role) => {
     const { data } = await supabase.rpc("leaderboard", { p_role: role, p_from: weekStart, p_to: today });
@@ -67,6 +79,8 @@ export async function getTeam(): Promise<TeamData> {
     roles: (rolesRes.data ?? []) as { key: string; name: string }[],
     meId: me.id,
     weekStart,
+    week: { filed, expected },
+    dots,
     myDay: (dayRes.data ?? null) as TeamData["myDay"],
     leaderboards,
     people: ((ppl.data ?? []) as unknown as { id: string; full_name: string; role: { name: string } | { name: string }[] | null }[]).map((p) => ({ id: p.id, name: p.full_name, role: (Array.isArray(p.role) ? p.role[0]?.name : p.role?.name) ?? "" })),

@@ -6,6 +6,11 @@ import { createPublicClient } from "@/lib/supabase/public";
 
 export const metadata = { title: "Preview", robots: { index: false, follow: false } };
 
+// A known path lets the shop's header prerender here. Real tokens are served on request; this one renders the 404 page.
+export function generateStaticParams() {
+  return [{ token: "__placeholder__" }];
+}
+
 /** A draft or scheduled article, opened from its preview link (FR-JR-006). Never indexed, never cached. */
 async function Preview({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

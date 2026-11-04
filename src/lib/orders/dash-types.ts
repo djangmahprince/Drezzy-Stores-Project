@@ -50,4 +50,6 @@ export type DashOrder = {
   source?: string;
   createdAt?: string;
   rider?: string;
+  /** The supplier already ordered from, when there is a supplier order. */
+  supplier?: string;
 };

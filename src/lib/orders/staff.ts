@@ -37,7 +37,7 @@ const rightsOf = (perms: Parameters<typeof can>[0]): OrderRights => ({
 
 const LIST_SELECT =
   "id, number, channel, branch, status, payment_state, payment_plan, total, balance_due, amount_paid, delivery_method, region, city, area, agent_name, courier, created_at, updated_at, source, rider_name, " +
-  "customer:customers(full_name, phone), items:order_items(product_name, variant_label, qty)";
+  "customer:customers(full_name, phone), items:order_items(product_name, variant_label, qty), supplier_orders(status, supplier:suppliers(name))";
 
 /** The orders this person may see. Row-level security already limits "own records only" roles to their own. */
 export async function getStaffOrders(): Promise<{ mode: "db" | "demo"; orders: DashOrder[]; rights: OrderRights }> {

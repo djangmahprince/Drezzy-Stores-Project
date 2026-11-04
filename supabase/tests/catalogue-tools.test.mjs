@@ -35,4 +35,22 @@ ok("archiving takes it off the shop", (await as("owner", () => tryQ("update publ
 ok("shoppers no longer see it", (await asRole("anon", () => tryQ("select id from public.products where id = $1", [vid.product_id]))).rows.length === 0);
 ok("a supplier's costs stay hidden from sales", (await as("sales", () => tryQ("select cost from public.supplier_offers"))).rows?.length === 0 || !(await as("sales", () => tryQ("select cost from public.supplier_offers"))).ok);
 
+// a supplier order that arrives in parts
+const two = (await db.query("select v.id from public.variants v join public.products p on p.id = v.product_id where p.published and v.availability = 'available' order by v.sku limit 2")).rows.map((r) => r.id);
+const placedOrder = (await asRole("anon", () => tryQ("select public.place_order($1::jsonb) as r", [JSON.stringify({
+  channel: "web", customer: { name: "Ama Mensah", phone: "0240000099" }, delivery: { method: "pickup" }, plan: "full", source: "Instagram", pay_method: "mtn", items: two.map((variant_id) => ({ variant_id, qty: 1 })) })]))).rows[0].r;
+await asRole("service_role", () => tryQ("select public.confirm_payment($1,$2,'{}'::jsonb)", [placedOrder.payment_reference, placedOrder.due_now]));
+const oid = (await db.query("select id from public.orders where number = $1", [placedOrder.number])).rows[0].id;
+await db.query("update public.orders set status = 'to_source' where id = $1", [oid]);
+const items = (await db.query("select id from public.order_items where order_id = $1 order by sku", [oid])).rows.map((r) => r.id);
+const so = (await as("sourcing", () => tryQ("select public.place_supplier_order($1,$2,$3::uuid[],300,null,null) as r", [oid, sup, items]))).rows[0].r;
+const state = async () => (await db.query("select (select status::text from public.supplier_orders where id = $1) s, (select status::text from public.orders where id = $2) o", [so, oid])).rows[0];
+ok("sales cannot mark an item as arrived", !(await as("sales", () => tryQ("select public.receive_supplier_items($1,$2::uuid[])", [so, [items[0]]]))).ok);
+ok("an item from another order is refused", !(await as("sourcing", () => tryQ("select public.receive_supplier_items($1,array[gen_random_uuid()])", [so]))).ok);
+ok("the first item arrives: partly received", (await as("sourcing", () => tryQ("select public.receive_supplier_items($1,$2::uuid[]) as r", [so, [items[0]]]))).rows?.[0]?.r === "partly_received");
+ok("the supplier order stays open, so no cost reaches Money yet", (await state()).s === "ordered");
+ok("the last item closes it", (await as("sourcing", () => tryQ("select public.receive_supplier_items($1,$2::uuid[]) as r", [so, [items[1]]]))).rows?.[0]?.r === "received");
+const end = await state();
+ok("the supplier order is received and the customer's order moves on", end.s === "received" && end.o === "ready_to_pack", JSON.stringify(end));
+
 done();

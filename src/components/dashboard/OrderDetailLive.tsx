@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
-  addNoteAction, advanceOrderAction, attachReceiptAction, receiptLinkAction, receiveSupplierOrderWithReceiptAction, failSupplierOrderAction, moveBackAction, payRefundAction, placeSupplierOrderAction, recordBalanceAction, recordPaymentAction, requestRefundAction, reviewPaymentAction, reviewRefundAction, updateDeliveryAction, type ActionResult,
+  addNoteAction, advanceOrderAction, attachReceiptAction, receiptLinkAction, receiveSupplierItemsAction, receiveSupplierOrderWithReceiptAction, failSupplierOrderAction, moveBackAction, payRefundAction, placeSupplierOrderAction, recordBalanceAction, recordPaymentAction, requestRefundAction, reviewPaymentAction, reviewRefundAction, updateDeliveryAction, type ActionResult,
 } from "@/app/dashboard/orders/actions";
 import { PageHead, Pill } from "@/components/dashboard/DashShell";
 import { formatGHS } from "@/lib/data";
@@ -128,6 +128,16 @@ export function OrderDetailLive({ d }: { d: OrderDetail }) {
                   )}
                   {s.status === "received" && r.canSource && !s.hasReceipt && files[s.id] && (
                     <button type="button" disabled={pending} className="btn-outline !min-h-9 text-xs" onClick={() => { const fd = new FormData(); fd.set("id", s.id); fd.set("receipt", files[s.id]!); run(() => attachReceiptAction(fd), "Receipt attached."); }}>Attach receipt</button>
+                  )}
+                  {s.status === "ordered" && s.itemIds.length > 1 && (
+                    <div className="w-full space-y-1 text-xs">
+                      {s.itemIds.some((id) => d.items.find((i) => i.id === id)?.sourcing === "received") && <p className="font-semibold text-warning">Partly received</p>}
+                      {s.itemIds.map((id) => {
+                        const it = d.items.find((i) => i.id === id);
+                        if (!it) return null;
+                        return <p key={id} className="flex items-center justify-between gap-2"><span>{it.name} · {it.label}</span>{it.sourcing === "received" ? <span className="text-success">Arrived</span> : r.canSource && <button type="button" disabled={pending} className="font-semibold text-navy underline" onClick={() => run(() => receiveSupplierItemsAction(s.id, [id]), "Item marked as arrived.")}>This one arrived</button>}</p>;
+                      })}
+                    </div>
                   )}
                   {s.status === "ordered" && r.canSource && (
                     <span className="flex gap-2">

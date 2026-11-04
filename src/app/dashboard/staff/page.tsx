@@ -1,21 +1,29 @@
 import { Suspense } from "react";
 import { Guard } from "@/components/dashboard/Guard";
-import { Kpi, PageHead, Pill, Progress } from "@/components/dashboard/DashShell";
 import { TeamLive } from "@/components/dashboard/TeamLive";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getTeam } from "@/lib/team/staff";
+import { getTeam, type ReportRow, type TargetRow, type TeamData } from "@/lib/team/staff";
 
 export const metadata = { title: "Staff and targets" };
 
-const rows: [string, string, string, number, "ok" | "warn" | "bad", string][] = [
-  ["Kwame · Sales, Kumasi", "Paid sales GHS 8,000", "GHS 6,240 · 78%", 78, "ok", "On pace"],
-  ["Akosua · Sales, Accra", "Paid sales GHS 8,000", "GHS 3,920 · 49%", 49, "bad", "Behind"],
-  ["Yaw · Dispatch, Kumasi", "On-time delivery 95%", "93% · 26 of 28", 93, "ok", "On pace"],
-  ["Adjoa · Sourcing, Accra", "Supplier order within 24 h, 95%", "96% · 23 of 24 orders", 96, "ok", "Hit"],
-  ["Esi · Content", "3 Journal posts", "3 of 3 published", 100, "ok", "Hit"],
-  ["Mawuli · Support", "Reply within 1 hour, 90%", "88% of 41 chats", 88, "warn", "Close"],
-  ["Kofi · Rider partner, Kumasi", "25 deliveries", "21 of 25", 84, "ok", "On pace"],
-];
+const person = (id: string, staff: string, metric: string, goal: number, actual: number, label: string | null = null): TargetRow => ({ id, staffId: id, staff, metric, goal, actual, from: "2026-11-02", to: "2026-11-08", note: null, elapsed: 0.7, weight: 1, status: "active", label });
+const filed = (staffId: string, name: string, role: string, summary: string | null): ReportRow => ({ staffId, name, role, filed: summary !== null, summary, blockers: null, ordersHandled: null });
+
+/** Design preview only: the same screen as the live one, with invented people and figures. */
+const sample: TeamData = {
+  canSet: true, today: "2026-11-06", weekStart: "2026-11-02", meId: "demo", mine: null, leaderboards: [], roles: [], myDay: null,
+  targets: [
+    person("kwame", "Kwame", "paid_sales", 8000, 6240), person("akosua", "Akosua", "paid_sales", 8000, 2920), person("yaw", "Yaw", "on_time_deliveries", 95, 93), person("adjoa", "Adjoa", "supplier_orders", 24, 24),
+    person("esi", "Esi", "articles_published", 3, 3), person("mawuli", "Mawuli", "check_in", 90, 60, "Replied within 1 hour"),
+  ],
+  people: [["kwame", "Kwame", "Sales · Kumasi"], ["akosua", "Akosua", "Sales · Accra"], ["yaw", "Yaw", "Dispatch · Kumasi"], ["adjoa", "Adjoa", "Sourcing · Accra"], ["esi", "Esi", "Content"], ["mawuli", "Mawuli", "Support"]].map(([id, name, role]) => ({ id, name, role })),
+  reports: [
+    { day: "2026-11-06", label: "Today", rows: [filed("kwame", "Kwame", "Sales", null)] },
+    { day: "2026-11-05", label: "Yesterday", rows: [filed("kwame", "Kwame", "Sales", "Confirmed 9 orders, 6 paid by MoMo. 2 customers waiting on EU 42 restock."), filed("akosua", "Akosua", "Sales", null), filed("yaw", "Yaw", "Dispatch", "7 deliveries, 1 failed in Obuasi, rescheduled for today.")] },
+  ],
+  week: { filed: 31, expected: 35 },
+  dots: { kwame: [true, true, true, true], akosua: [true, true, true, false], yaw: [true, true, true, true], adjoa: [true, true, true, true], esi: [true, true, true, true], mawuli: [true, true, true, true] },
+};
 
 async function Live() {
   return <TeamLive d={await getTeam()} />;
@@ -25,45 +33,12 @@ export default function Staff() {
   return (
     <Guard module={["targets_view", "targets_set", "staff"]}>
       {isSupabaseConfigured ? (
-        <>
-          <PageHead real title="Staff and targets" sub="Progress is counted from real orders, supplier orders and deliveries. Daily reports fill the gaps." />
-          <Suspense fallback={<div className="h-64 animate-pulse rounded-[12px] bg-white" aria-busy="true" />}>
-            <Live />
-          </Suspense>
-        </>
+        <Suspense fallback={<div className="h-64 animate-pulse rounded-[12px] bg-white" aria-busy="true" />}>
+          <Live />
+        </Suspense>
       ) : (
-        <Sample />
+        <TeamLive d={sample} real={false} />
       )}
     </Guard>
-  );
-}
-
-function Sample() {
-  return (
-    <>
-      <PageHead title="Staff and targets" sub="Progress is counted from real orders, supplier orders and deliveries. Daily reports fill the gaps." actions={<button className="btn-primary">Set a target</button>} />
-      <div className="grid grid-cols-3 gap-3">
-        <Kpi label="Targets on pace or hit" value="5 of 7" note="2 need a check-in" />
-        <Kpi label="Daily reports this week" value="31 of 35" note="1 missing yesterday" />
-        <Kpi label="Team sales vs weekly target" value="74%" note="GHS 18,450 of GHS 25,000" />
-      </div>
-      <section className="card mt-4 divide-y divide-line">
-        {rows.map(([who, target, prog, pct, tone, pace]) => (
-          <div key={who} className="grid items-center gap-2 p-4 text-sm md:grid-cols-4">
-            <b>{who}</b><span className="text-text2">{target}</span>
-            <div><p>{prog}</p><Progress pct={pct} tone={tone} /></div>
-            <Pill tone={tone}>{pace}</Pill>
-          </div>
-        ))}
-      </section>
-      <section className="card mt-4 p-4 text-sm">
-        <h2 className="font-semibold">Yesterday&apos;s daily reports</h2>
-        <ul className="mt-2 space-y-2">
-          <li><b>Kwame</b> · Sent 18:05 · Confirmed 9 orders, 6 paid by MoMo. Blocker: 2 customers waiting on EU 42 restock.</li>
-          <li><b>Akosua</b> · <Pill tone="bad">Missing</Pill> reminder sent. Admin was notified at the cut-off time.</li>
-          <li><b>Yaw</b> · Sent 19:20 · 7 deliveries, 1 failed in Obuasi, rescheduled for today.</li>
-        </ul>
-      </section>
-    </>
   );
 }

@@ -6,8 +6,8 @@ export const metadata = { title: "Setup" };
 const steps = [
   ["Create a Supabase project", "supabase.com → New project. Pick a region close to Ghana (for example Europe West) and save the database password somewhere safe."],
   ["Copy the keys into .env.local", "Project Settings → API. Copy .env.example to .env.local and fill in the URL, the publishable (anon) key and the secret (service role) key. Restart the dev server."],
-  ["Apply the database", "Open the SQL editor and run every file in supabase/migrations in order. They create the staff, roles, permissions, audit log and catalogue tables with the security rules. Then run supabase/seed.sql to start with the sample catalogue (optional: skip it and import your own Excel list instead)."],
-  ["Turn on 2FA", "Authentication → Sign In / Providers → Multi-Factor: enable TOTP. Also switch off public sign-ups so only staff you add can log in."],
+  ["Apply the database", "Add SUPABASE_DB_URL to .env.local (Connect, Session pooler), then run: node scripts/db-apply.mjs --apply --seed. It creates the tables, rules, storage buckets and starter catalogue, and is safe to run again."],
+  ["Turn on 2FA", "Authentication, Multi-Factor: enable TOTP. Keep customer sign-ups on: staff only get access through the staff table."],
   ["Create the first Owner", "Run: node scripts/create-owner.mjs you@example.com \"Your Name\". It prints a one-time password."],
 ];
 

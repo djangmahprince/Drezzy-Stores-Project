@@ -11,12 +11,11 @@ import { getCatalogue } from "@/lib/catalogue/server";
 import { formatGHS } from "@/lib/data";
 import { getAlsoBought, getProductReviews, publicFile } from "@/lib/site/server";
 
+// Cache Components needs at least one path to check the route at build time; a slug nobody uses renders the 404 page.
+// Cache Components needs at least one path to check the route at build time. A slug nobody uses renders the 404 page.
 export async function generateStaticParams() {
-  try {
-    return (await getCatalogue()).map((p) => ({ slug: p.slug }));
-  } catch {
-    return []; // the database is unreachable at build time: pages are rendered on first request instead
-  }
+  const slugs = await getCatalogue().then((list) => list.map((x) => x.slug)).catch(() => [] as string[]);
+  return (slugs.length ? slugs : ["__placeholder__"]).map((slug) => ({ slug }));
 }
 
 /** Titles, descriptions and share images, so product links preview well on WhatsApp and Instagram (FR-SF-015). */

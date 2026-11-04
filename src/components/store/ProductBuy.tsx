@@ -226,6 +226,9 @@ export function ProductBuy({ product: p }: { product: Product }) {
         </div>
         {hint && !size && <p role="alert" className="mt-2 text-sm font-medium text-error">Choose a size to add this to your bag.</p>}
         {unavailableSizes.length > 0 && <NotifyMe productId={p.id} sizes={unavailableSizes} kind="restock" />}
+        {picked?.availability === "Pre-order" && (
+          <p className="mt-2 flex items-center gap-2 text-sm text-text2"><Icon name="clock" size={16} /> Pre-order{picked.expectedOn ? `, expected ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Accra" }).format(new Date(picked.expectedOn))}` : ""}.</p>
+        )}
         {picked?.availability === "Limited" && (
           <p className="mt-2 flex items-center gap-2 text-sm text-warning"><Icon name="clock" size={16} /> Limited at our supplier in {sizeWord} {picked.size}. Order soon.</p>
         )}

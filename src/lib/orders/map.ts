@@ -9,6 +9,7 @@ export type OrderRow = {
   source?: string | null; rider_name?: string | null;
   customer: { full_name: string; phone: string } | { full_name: string; phone: string }[] | null;
   items: { product_name: string; variant_label: string; qty: number }[] | null;
+  supplier_orders?: { status: string; supplier: { name: string } | { name: string }[] | null }[] | null;
 };
 
 const channelLabel: Record<string, DashOrder["channel"]> = {
@@ -73,6 +74,7 @@ export function orderFromRow(r: OrderRow, now: number): DashOrder {
     age: ageLabel(now, r.updated_at),
     late: isLate(status, hours),
     courier: r.courier ?? undefined,
+    supplier: one(r.supplier_orders?.find((s) => s.status !== "failed")?.supplier)?.name,
     log: [],
     notes: [],
     ...(r.region ? { region: r.region } : {}),

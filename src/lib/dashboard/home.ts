@@ -1,6 +1,7 @@
 import "server-only";
 import { connection } from "next/server";
 import { requireStaff } from "@/lib/auth";
+import { getRoleHome, type RoleHome } from "@/lib/dashboard/role-home";
 import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,6 +18,7 @@ export type HomeData = {
   sources: { source: string; count: number }[];
   weekOrders: number;
   canOrders: boolean;
+  role: RoleHome;
 };
 
 const HOUR = 3_600_000;
@@ -34,11 +36,12 @@ export async function getHome(): Promise<HomeData> {
   const weekAgo = new Date(now - 7 * 24 * HOUR).toISOString();
   const canOrders = can(me.permissions, "orders", "view");
 
-  const [open, recent, pays, refunds] = await Promise.all([
+  const [open, recent, pays, refunds, role] = await Promise.all([
     canOrders ? supabase.from("orders").select("number, status, payment_state, updated_at, agent_name").not("status", "in", "(delivered,cancelled)").limit(1000) : Promise.resolve({ data: [] }),
     canOrders ? supabase.from("orders").select("source").gte("created_at", weekAgo).limit(2000) : Promise.resolve({ data: [] }),
     canOrders ? supabase.from("payments").select("amount, confirmed_at").eq("status", "success").neq("kind", "refund").gte("confirmed_at", weekAgo) : Promise.resolve({ data: null }),
     can(me.permissions, "refunds", "view") ? supabase.from("refunds").select("id", { count: "exact", head: true }).eq("status", "requested") : Promise.resolve({ count: 0 }),
+    getRoleHome(me, now),
   ]);
 
   type O = { number: string; status: string; payment_state: string; updated_at: string; agent_name: string | null };
@@ -77,5 +80,6 @@ export async function getHome(): Promise<HomeData> {
     sources: [...bySource.entries()].map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count).slice(0, 6),
     weekOrders: (recent.data ?? []).length,
     canOrders,
+    role,
   };
 }

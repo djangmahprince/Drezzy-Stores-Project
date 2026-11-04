@@ -7,12 +7,10 @@ import { ShopTheLook } from "@/components/store/ShopTheLook";
 import { getCatalogue } from "@/lib/catalogue/server";
 import { getSiteContent } from "@/lib/site/server";
 
+// Cache Components needs at least one path to check the route at build time. A slug nobody uses renders the 404 page.
 export async function generateStaticParams() {
-  try {
-    return (await getSiteContent()).looks.map((l) => ({ slug: l.slug }));
-  } catch {
-    return [];
-  }
+  const slugs = await getSiteContent().then((c) => c.looks.map((x) => x.slug)).catch(() => [] as string[]);
+  return (slugs.length ? slugs : ["__placeholder__"]).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

@@ -6,9 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { error?: string };
 
-/** Only ever send people back into the staff area, never to an address someone typed into the URL. */
+/** Only ever send people back into the staff area or the partner portal, never to an address someone typed into the URL. */
 function safeNext(value: string) {
-  return value.startsWith("/dashboard") && !value.startsWith("//") && !value.includes("\\") ? value : "/dashboard";
+  return /^\/(dashboard|partner)(\/|$|\?)/.test(value) && !value.includes("\\") ? value : "/dashboard";
 }
 
 export async function signIn(_prev: LoginState, formData: FormData): Promise<LoginState> {

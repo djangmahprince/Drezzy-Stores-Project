@@ -5,56 +5,88 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { alertsAction, markAlertsReadAction, noteDeviceAction, searchAction, setBranchAction, type Alert, type SearchHit } from "@/app/dashboard/actions";
 import { signOut } from "@/app/login/actions";
-import { Icon } from "@/components/Icon";
+import { Icon, type IconName } from "@/components/Icon";
 import { Logo } from "@/components/Logo";
 
 export type NavItem = { href: string; label: string };
 export type Who = { name: string; role: string };
+type Branch = "all" | "accra" | "kumasi";
 
 const active = (path: string, href: string) => (href === "/dashboard" ? path === href : path === href || path.startsWith(`${href}/`));
+
+const icons: Record<string, IconName> = {
+  "/dashboard": "home", "/dashboard/orders": "bag", "/dashboard/dispatch": "truck", "/dashboard/products": "sneaker", "/dashboard/catalogue": "box", "/dashboard/customers": "people",
+  "/dashboard/support": "inbox", "/dashboard/staff": "target", "/dashboard/money": "card", "/dashboard/analytics": "chart", "/dashboard/content": "book", "/dashboard/exports": "download", "/dashboard/settings": "gear",
+};
 
 function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   const path = usePathname();
   return (
-    <nav className="mt-2 flex flex-col gap-1" aria-label="Dashboard">
-      {items.map((n) => (
-        <Link
-          key={n.href}
-          href={n.href}
-          onClick={onNavigate}
-          aria-current={active(path, n.href) ? "page" : undefined}
-          className={`relative rounded-[12px] px-3 py-2.5 text-sm transition-colors hover:bg-white/10 ${active(path, n.href) ? "bg-white/15 font-semibold" : "text-white/85"}`}
-        >
-          {active(path, n.href) && <span className="absolute left-0 top-2 h-[calc(100%-1rem)] w-1 rounded-full bg-lime" aria-hidden="true" />}
-          {n.label}
-        </Link>
-      ))}
+    <nav className="mt-4 flex flex-col gap-1" aria-label="Dashboard">
+      {items.map((n) => {
+        const on = active(path, n.href);
+        return (
+          <Link key={n.href} href={n.href} onClick={onNavigate} aria-current={on ? "page" : undefined}
+            className={`flex min-h-11 items-center gap-3 rounded-[12px] px-3 py-2 text-[15px] leading-tight transition-colors ${on ? "bg-lime font-semibold text-navy" : "text-white/85 hover:bg-white/10"}`}>
+            <Icon name={icons[n.href] ?? "spark"} size={20} className="shrink-0" />
+            {n.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
 
-function WhoCard({ who }: { who: Who }) {
+function BranchSelect({ branch }: { branch: Branch }) {
+  const [value, setValue] = useState(branch);
+  const router = useRouter();
   return (
-    <div className="mt-auto space-y-2 rounded-[12px] bg-white/10 p-3 text-sm">
-      <div>
-        <p className="font-semibold">{who.name}</p>
-        <p className="text-white/70">{who.role}</p>
-      </div>
-      <Link href="/dashboard/account" className="block rounded-[10px] px-3 py-2 text-white/90 transition-colors hover:bg-white/10">Account</Link>
-      <form action={signOut}>
-        <button className="w-full rounded-[10px] bg-white/10 px-3 py-2 text-left text-white/90 transition-colors hover:bg-white/20">Sign out</button>
-      </form>
+    <label className="mt-6 block">
+      <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.12em] text-white/70">Branch</span>
+      <select value={value} onChange={async (e) => { const v = e.target.value as Branch; setValue(v); await setBranchAction(v); router.refresh(); }}
+        className="min-h-10 w-full rounded-[10px] border border-white/25 bg-white/10 px-3 text-sm text-white outline-none [&>option]:text-ink">
+        <option value="all">All branches</option><option value="accra">Accra</option><option value="kumasi">Kumasi</option>
+      </select>
+    </label>
+  );
+}
+
+/** The person at the bottom of the sidebar. Their account, display settings and sign-out open from here. */
+function WhoCard({ who }: { who: Who }) {
+  const [open, setOpen] = useState(false);
+  const letters = who.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  return (
+    <div className="relative mt-auto pt-4">
+      {open && (
+        <div className="mb-2 space-y-1 rounded-[12px] bg-white/10 p-2 text-sm">
+          <Link href="/dashboard/account" className="block rounded-[8px] px-2 py-2 hover:bg-white/10">Account</Link>
+          <Appearance />
+          <form action={signOut}><button className="w-full rounded-[8px] px-2 py-2 text-left hover:bg-white/10">Sign out</button></form>
+        </div>
+      )}
+      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 rounded-[12px] p-1 text-left hover:bg-white/10">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-lime text-xs font-bold text-navy" aria-hidden="true">{letters}</span>
+        <span className="min-w-0 text-sm leading-tight"><span className="block truncate font-semibold">{who.name}</span><span className="block truncate text-xs text-white/75">{who.role}</span></span>
+      </button>
     </div>
   );
 }
 
-export function DashSidebar({ items, who }: { items: NavItem[]; who: Who }) {
+function SideBody({ items, who, branch, onNavigate }: { items: NavItem[]; who: Who; branch?: Branch; onNavigate?: () => void }) {
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy p-4 text-white lg:flex">
-      <Logo />
-      <p className="label-wide mt-6 !text-[9px] text-white/60">Staff</p>
-      <NavLinks items={items} />
+    <>
+      <div className="flex items-center gap-3"><Logo href="/dashboard" /><span className="rounded-[6px] bg-lime px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-navy">Staff</span></div>
+      {branch && <BranchSelect branch={branch} />}
+      <NavLinks items={items} onNavigate={onNavigate} />
       <WhoCard who={who} />
+    </>
+  );
+}
+
+export function DashSidebar({ items, who, branch }: { items: NavItem[]; who: Who; branch?: Branch }) {
+  return (
+    <aside className="sticky top-0 hidden h-screen w-[250px] shrink-0 flex-col overflow-y-auto bg-navy p-4 text-white lg:flex">
+      <SideBody items={items} who={who} branch={branch} />
     </aside>
   );
 }
@@ -75,7 +107,7 @@ function Bell() {
   return (
     <div className="relative">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`Notifications, ${data.unread} unread`} className="relative flex size-10 items-center justify-center rounded-full border border-line bg-white text-navy">
-        <Icon name="spark" size={20} />
+        <Icon name="bell" size={20} />
         {data.unread > 0 && <span className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-error px-1 text-[11px] font-bold leading-5 text-white">{data.unread > 9 ? "9+" : data.unread}</span>}
       </button>
       {open && (
@@ -121,9 +153,10 @@ function GlobalSearch() {
   }, []);
   const kinds: Record<string, string> = { order: "Order", customer: "Customer", product: "Product", supplier: "Supplier" };
   return (
-    <form role="search" onSubmit={(e) => { e.preventDefault(); setOpen(false); router.push(`/dashboard/orders?q=${encodeURIComponent(q.trim())}`); }} className="relative min-w-0 max-w-sm flex-1">
+    <form role="search" onSubmit={(e) => { e.preventDefault(); setOpen(false); router.push(`/dashboard/orders?q=${encodeURIComponent(q.trim())}`); }} className="relative min-w-0 flex-1">
+      <Icon name="search" size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text2" />
       <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} onBlur={() => window.setTimeout(() => setOpen(false), 150)} onFocus={() => hits.length && setOpen(true)}
-        className="field !min-h-10" placeholder="Search order, phone, customer, SKU ( / )" aria-label="Global search" />
+        className="field !min-h-11 !pl-10 !text-sm" placeholder="Search order number, phone, customer or SKU" aria-label="Global search" />
       {open && q.trim().length >= 2 && (
         <ul className="absolute inset-x-0 top-12 z-50 max-h-80 overflow-y-auto rounded-[12px] border border-line bg-white shadow-xl">
           {hits.length === 0 ? <li className="px-4 py-3 text-sm text-text2">No matches. Press Enter to search orders.</li> : hits.map((h, i) => (
@@ -190,17 +223,15 @@ function Appearance() {
     else { const v = !compact; setCompact(v); root.toggleAttribute("data-dash-compact", v); localStorage.setItem("drezzy.dash.density", v ? "compact" : "normal"); }
   };
   return (
-    <div className="flex gap-1">
-      <button type="button" onClick={() => flip("theme")} aria-pressed={dark} className="chip min-h-9 bg-card px-3 text-navy" title="Light or dark">{dark ? "Dark" : "Light"}</button>
-      <button type="button" onClick={() => flip("density")} aria-pressed={compact} className="chip min-h-9 bg-card px-3 text-navy" title="Table density">{compact ? "Compact" : "Comfy"}</button>
+    <div className="flex gap-1 px-1">
+      <button type="button" onClick={() => flip("theme")} aria-pressed={dark} className="flex-1 rounded-[8px] bg-white/10 px-2 py-1.5 text-xs" title="Light or dark">{dark ? "Dark" : "Light"}</button>
+      <button type="button" onClick={() => flip("density")} aria-pressed={compact} className="flex-1 rounded-[8px] bg-white/10 px-2 py-1.5 text-xs" title="Table density">{compact ? "Compact" : "Comfy"}</button>
     </div>
   );
 }
 
-export function DashTopbar({ items, who, branch: initialBranch = "all" }: { items: NavItem[]; who: Who; branch?: "all" | "accra" | "kumasi" }) {
+export function DashTopbar({ items, who, branch }: { items: NavItem[]; who: Who; branch?: Branch }) {
   const [menu, setMenu] = useState(false);
-  const [branch, setBranch] = useState(initialBranch);
-  const router = useRouter();
   const path = usePathname();
 
   useEffect(() => {
@@ -221,18 +252,10 @@ export function DashTopbar({ items, who, branch: initialBranch = "all" }: { item
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b border-line bg-white px-4 py-3">
-        <button type="button" onClick={() => setMenu(true)} className="btn-outline !min-h-10 lg:hidden" aria-label="Open menu">
-          <Icon name="menu" size={20} /> Menu
-        </button>
-        <div className="flex gap-1 text-sm" role="group" aria-label="Branch">
-          {([["all", "All branches"], ["accra", "Accra"], ["kumasi", "Kumasi"]] as const).map(([v, l]) => (
-            <button key={v} type="button" aria-pressed={branch === v} onClick={async () => { setBranch(v); await setBranchAction(v); router.refresh(); }} className={`chip min-h-9 px-3 ${branch === v ? "bg-navy text-white" : "bg-card text-navy"}`}>{l}</button>
-          ))}
-        </div>
+      <header className="sticky top-0 z-30 flex items-center gap-3 bg-page px-4 py-3 md:px-6">
+        <button type="button" onClick={() => setMenu(true)} className="btn-outline !min-h-11 !px-3 lg:hidden" aria-label="Open menu"><Icon name="menu" size={20} /></button>
         <GlobalSearch />
-        {path !== "/dashboard/orders/new" && <Link href="/dashboard/orders/new" className="btn-primary !min-h-10">Create order</Link>}
-        <Appearance />
+        {path !== "/dashboard/orders/new" && <Link href="/dashboard/orders/new" className="btn-primary !min-h-11 shrink-0"><Icon name="plus" size={18} /> <span className="hidden sm:inline">Create order</span></Link>}
         <Bell />
       </header>
       <Shortcuts />
@@ -241,12 +264,8 @@ export function DashTopbar({ items, who, branch: initialBranch = "all" }: { item
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Dashboard menu">
           <div className="absolute inset-0 bg-ink/50" onClick={() => setMenu(false)} />
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto bg-navy p-4 text-white">
-            <div className="flex items-center justify-between">
-              <Logo />
-              <button type="button" onClick={() => setMenu(false)} aria-label="Close menu" className="flex size-10 items-center justify-center rounded-full hover:bg-white/10"><Icon name="close" /></button>
-            </div>
-            <NavLinks items={items} onNavigate={() => setMenu(false)} />
-            <WhoCard who={who} />
+            <button type="button" onClick={() => setMenu(false)} aria-label="Close menu" className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full hover:bg-white/10"><Icon name="close" /></button>
+            <SideBody items={items} who={who} branch={branch} onNavigate={() => setMenu(false)} />
           </div>
         </div>
       )}

@@ -16,33 +16,28 @@ npm run build
 
 ## Where the project is
 
-| PRD phase | State |
+All P0 and P1 requirements in the PRD are built, on one codebase: the shop, My Drezzy accounts, checkout and tracker, the staff
+dashboard, catalogue and sourcing, money, targets, content, analytics, exports and the partner portal at `/partner`.
+The database enforces every rule with row-level security, and `npm test` exercises those rules.
+
+Waiting on something outside the code:
+
+| Item | Waiting for |
 | --- | --- |
-| Storefront and dashboard UI | Interactive prototype on sample data (cart, checkout rules, tracker, dispatch board, catalogue, orders) |
-| Sprint 1: identity, roles, audit | Built. Needs a Supabase project to run for real (below) |
-| Sprint 2: catalogue, variants, suppliers, availability, Excel import | Built. Storefront and dashboard read it from Supabase, or show the sample catalogue until connected |
-| Sprint 3/4: orders, payments, tracker, dispatch | Built. Guest checkout and staff orders are priced by the database; Paystack webhook and manual MoMo; public tracker; dispatch board; order detail |
-| Sourcing: supplier orders | Built. Order from a supplier after payment, receive, or mark failed; costs hidden from roles without money access |
-| Money: ledger, expenses, monthly summary | Built. One ledger over payments, supplier costs and expenses; role category limits |
-| Refunds | Built. Support requests, Finance/Admin/Owner approve and pay (not their own request); shown as money out |
-| Customer emails | Built. The database queues one email per customer-facing order update; `/api/notifications/run` sends them through Resend every 5 minutes (needs `RESEND_API_KEY`, `NOTIFY_FROM`, `CRON_SECRET`) |
-| Delivery zones | Built. Settings edits fee, days, half payment and on/off; the shop, cart and checkout read the database zones |
-| Targets, daily reports | Built. Targets are counted from orders, supplier orders and reports; every staff member files a daily report; managers see who has not |
-| Analytics | Built. Sales, new vs repeat customers, best sellers, sources, and a funnel from anonymous shop visits to delivery. Money figures hidden from non-money roles |
-| Salary records | Built. Owner and Finance only; paid salaries are locked and count as money out |
-| Data exports | Built. CSV of orders, customers, money and catalogue, limited to what the role may see; every download is logged |
-| Drip School editor | Built. Draft, review, publish or schedule; plain-text articles with a live preview; the shop reads them from the database |
-| Receipts | Built. Photo or PDF of a supplier receipt goes to a private bucket; only roles that see supplier costs can open it |
-| Customer accounts | Built. Optional sign-up with email confirmation; a confirmed email links earlier guest orders; order history on any device. Turn on email confirmation in Supabase Auth settings |
-| WhatsApp | Click-to-chat messages written for each order stage (automatic sending needs the WhatsApp Business API) |
-| Still to build | Courier integrations (needs the courier you will use), automatic WhatsApp sending |
+| Courier API integration | Choosing a courier |
+| Card and MoMo payments | Paystack approval and keys |
+| Customer email | Resend key and a verified sending domain (SPF, DKIM, DMARC) |
+| Automatic SMS and WhatsApp | Hubtel and WhatsApp Business accounts and approved templates |
+| Google and phone sign-in | Provider set up in Supabase Authentication |
+
+Left for phase 3 (PRD P2): native app store builds, AI stylist, visual search, held-stock mode, international currencies, returns workflow.
 
 ## Connecting Supabase (about ten minutes)
 
 1. Create a Supabase project (pick a region close to Ghana).
 2. Copy `.env.example` to `.env.local` and fill in the URL, publishable key and secret key. Restart `npm run dev`.
-3. Run the files in `supabase/migrations` in order (SQL editor, or `supabase db push`). Optionally run `supabase/seed.sql` to start with the sample catalogue (regenerate it with `npm run seed:generate`).
-4. Authentication → Multi-Factor: enable TOTP. Authentication → Sign In: switch off public sign-ups.
+3. Add `SUPABASE_DB_URL` to `.env.local` (Connect → Session pooler). Run `npm run db:status` to see what will run, then `node scripts/db-apply.mjs --apply --seed`. This also creates the storage buckets. It is safe to run again: only new files are applied.
+4. Authentication → Multi-Factor: enable TOTP. Set Site URL and redirect URLs to your domain. Keep customer sign-ups on (My Drezzy needs them): staff get access only through the `staff` table. Set the password-reset link expiry to 3600 seconds (60 minutes, PRD FR-ACC-002).
 5. Create the first Owner: `node scripts/create-owner.mjs you@example.com "Your Name"`.
 6. Sign in at `/login`, set up 2FA, then add staff from Settings → Staff.
 
@@ -86,3 +81,7 @@ changes appear immediately. Without Supabase it shows the sample catalogue in `s
 - Money is stored as exact decimals in cedis (numeric 12,2) rather than integer pesewas as the PRD suggests. It is equally exact.
 - Order lookups and payment retries are rate-limited in memory per server instance: best effort, not a guarantee.
 - Prices marked `// sample` and all delivery fees in `src/lib/data.ts` are defaults until the owner confirms them.
+
+## Backups
+
+Supabase takes daily backups on its paid plans. Turn on point-in-time recovery before launch, and test a restore once.

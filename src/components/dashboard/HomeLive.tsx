@@ -9,6 +9,26 @@ export function HomeLive({ d }: { d: HomeData }) {
   return (
     <>
       <PageHead real title={`${d.greeting}${d.name ? `, ${d.name}` : ""}`} sub="What needs doing, from the orders and payments you can see" />
+      {d.role.actions.length > 0 && <div className="mb-4 flex flex-wrap gap-2">{d.role.actions.map((a, i) => <Link key={a.href} href={a.href} className={`${i === 0 ? "btn-primary" : "btn-outline"} !min-h-10`}>{a.label}</Link>)}</div>}
+      <ul className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+        {d.role.tiles.map((t) => (
+          <li key={t.label} className="card p-4">
+            {t.href ? <Link href={t.href} className="block"><p className="text-sm text-text2">{t.label}</p><p className="text-2xl font-bold">{t.value}</p></Link> : <><p className="text-sm text-text2">{t.label}</p><p className="text-2xl font-bold">{t.value}</p></>}
+          </li>
+        ))}
+      </ul>
+      <div className="mb-4 grid gap-4 md:grid-cols-2">
+        {d.role.lists.map((l) => (
+          <section key={l.title} className="card p-4">
+            <h2 className="font-semibold">{l.title}</h2>
+            {l.items.length === 0 ? <p className="mt-3 text-sm text-text2">{l.empty}</p> : (
+              <ul className="mt-3 space-y-2 text-sm">
+                {l.items.map((x, i) => <li key={i}>{x.href ? <Link href={x.href} className="underline">{x.text}</Link> : x.text}{x.pct !== undefined && <Progress pct={x.pct} />}</li>)}
+              </ul>
+            )}
+          </section>
+        ))}
+      </div>
       <div className="grid gap-4 lg:grid-cols-3">
         {d.days && (
           <section className="card p-4 lg:col-span-2">

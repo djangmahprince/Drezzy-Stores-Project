@@ -19,6 +19,8 @@ export type Variant = {
   leadDays: number;
   /** When the sale price on this size ends (the normal price is then in compareAt). */
   saleEndsAt?: string;
+  /** When a Pre-order size is expected. */
+  expectedOn?: string;
 };
 
 export type Product = {

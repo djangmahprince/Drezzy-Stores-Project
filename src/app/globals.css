@@ -79,6 +79,8 @@ body {
   }
 
 /* Staff dashboard: dark theme and compact tables (FR-DB-007). Switched on the <html> element by the top bar. */
+.dash-shell .card { border-radius: 16px; }
+
 html[data-dash-dark] {
   --page: #11131c;
   --card: #1b1e2b;

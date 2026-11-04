@@ -1,25 +1,53 @@
+import Link from "next/link";
+import { Sparkline } from "@/components/dashboard/Charts";
+
 export { DashSidebar, DashTopbar } from "@/components/dashboard/DashNav";
 
 export function PageHead({ title, sub, actions, real }: { title: string; sub?: string; actions?: React.ReactNode; real?: boolean }) {
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="text-[28px] font-bold leading-tight">{title}</h1>
-        {sub && <p className="text-sm text-text2">{sub} {!real && <span className="chip ml-1 bg-card text-text2">Sample data</span>}</p>}
+      <div className="min-w-0">
+        <h1 className="flex flex-wrap items-center gap-3 text-[28px] font-bold leading-tight text-navy">{title} {!real && <span className="chip bg-[#fbeedb] text-warning">Sample data</span>}</h1>
+        {sub && <p className="mt-1 text-sm text-text2">{sub}</p>}
       </div>
-      {actions && <div className="flex gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }
 
-export function Kpi({ label, value, note }: { label: string; value: string; note?: string }) {
-  return (
-    <div className="card p-4">
+export type Trend = { x: string; y: number }[];
+
+/** A KPI card (FR-DB-004): the number, its change against the last period, and a small trend line. Opens the detail when linked. */
+export function Kpi({ label, value, note, noteTone, valueTone, trend, href, children }: {
+  label: string; value: string; note?: string; noteTone?: "ok" | "bad" | "warn"; valueTone?: "ok" | "bad"; trend?: Trend; href?: string; children?: React.ReactNode;
+}) {
+  const noteCls = noteTone === "ok" ? "text-success" : noteTone === "bad" ? "text-error" : noteTone === "warn" ? "text-warning" : "text-text2";
+  const body = (
+    <>
       <p className="text-sm text-text2">{label}</p>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
-      {note && <p className="text-xs text-text2">{note}</p>}
+      <p className={`mt-1 text-[26px] font-bold leading-tight ${valueTone === "ok" ? "text-success" : valueTone === "bad" ? "text-error" : "text-navy"}`}>{value}</p>
+      {children}
+      {note && <p className={`mt-1 text-xs font-medium ${noteCls}`}>{note}</p>}
+      {trend && <Sparkline points={trend} label={label} />}
+    </>
+  );
+  return href ? <Link href={href} className="card block p-4 transition-shadow hover:shadow-md">{body}</Link> : <div className="card p-4">{body}</div>;
+}
+
+/** Today, this week, this month: a segmented control, as links or as buttons. */
+export function Segmented<T extends string>({ options, value, onChange, label }: { options: readonly (readonly [T, string])[]; value: T; onChange: (v: T) => void; label: string }) {
+  return (
+    <div className="inline-flex rounded-[12px] border border-line bg-white p-1 text-sm" role="group" aria-label={label}>
+      {options.map(([k, l]) => <button key={k} type="button" aria-pressed={value === k} onClick={() => onChange(k)} className={`min-h-9 rounded-[9px] px-3 font-medium transition-colors ${value === k ? "bg-navy text-white" : "text-text2 hover:text-navy"}`}>{l}</button>)}
     </div>
   );
+}
+
+/** Round initials, as in the team lists and the sidebar. */
+export function Avatar({ name, tone = "navy" }: { name: string; tone?: "navy" | "lime" | "grey" }) {
+  const letters = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
+  const cls = tone === "lime" ? "bg-lime text-navy" : tone === "grey" ? "bg-card text-navy" : "bg-navy text-lime";
+  return <span className={`flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${cls}`} aria-hidden="true">{letters}</span>;
 }
 
 const tones = {

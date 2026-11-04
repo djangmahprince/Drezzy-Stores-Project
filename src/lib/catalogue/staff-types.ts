@@ -44,7 +44,11 @@ export type StaffCatalogue = {
   rights: CatalogueRights;
   /** Days after which availability counts as not checked (Settings, PRD default 7). */
   staleDays: number;
+  /** Recent supplier orders, newest first. */
+  supplierOrders: SupplierOrderLine[];
 };
+
+export type SupplierOrderLine = { id: string; productIds: string[]; status: "ordered" | "received" | "failed"; text: string; at: string; orderNumber: string; supplier: string; expected: string | null };
 
 export type ProductStatus = "draft" | "active" | "archived";
 

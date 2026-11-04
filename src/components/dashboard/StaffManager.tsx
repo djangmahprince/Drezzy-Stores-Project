@@ -95,15 +95,19 @@ function Row({ s, roles, meId, meIsOwner, canEdit }: { s: StaffRowData; roles: R
 }
 
 export function StaffManager({ staff, roles, meId, meIsOwner, canCreate, canEdit }: { staff: StaffRowData[]; roles: RoleOption[]; meId: string; meIsOwner: boolean; canCreate: boolean; canEdit: boolean }) {
+  const [q, setQ] = useState("");
+  const term = q.trim().toLowerCase();
+  const shown = staff.filter((s) => !term || JSON.stringify(s).toLowerCase().includes(term));
   return (
     <>
       <AddStaff roles={roles} meIsOwner={meIsOwner} canCreate={canCreate} />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a person" aria-label="Find a person" className="field mb-3 !min-h-10 max-w-xs" />
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="border-b border-line text-text2">
             <tr>{["Person", "Role", "Branch", "Status", ""].map((h) => <th key={h} className="px-3 py-3 font-medium">{h}</th>)}</tr>
           </thead>
-          <tbody>{staff.map((s) => <Row key={s.id} s={s} roles={roles} meId={meId} meIsOwner={meIsOwner} canEdit={canEdit} />)}</tbody>
+          <tbody>{shown.map((s) => <Row key={s.id} s={s} roles={roles} meId={meId} meIsOwner={meIsOwner} canEdit={canEdit} />)}</tbody>
         </table>
       </div>
       <p className="mt-3 text-sm text-text2">Switching someone off blocks their sign-in straight away. Every change here is recorded in the audit log.</p>

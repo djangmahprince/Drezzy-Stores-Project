@@ -4,7 +4,7 @@ import type { Art, Product, Variant } from "./types.ts";
 
 export type VariantRow = {
   id: string; style: string | null; colour: string; size: string; sku: string;
-  price: number | string; compare_at: number | string | null; availability: string; lead_days: number;
+  price: number | string; compare_at: number | string | null; availability: string; lead_days: number; expected_on?: string | null;
   sale_price?: number | string | null; sale_starts_at?: string | null; sale_ends_at?: string | null;
 };
 
@@ -46,6 +46,7 @@ export function variantFromRow(r: VariantRow): Variant {
     leadDays: r.lead_days,
   };
   if (sale && r.sale_ends_at) v.saleEndsAt = r.sale_ends_at;
+  if (r.expected_on) v.expectedOn = r.expected_on;
   return v;
 }
 
@@ -80,4 +81,4 @@ export const PUBLIC_PRODUCT_SELECT =
   "id, slug, sku, name, brand, audience, description, details, condition, is_new, popular, art, images, video_url, material, care_notes, delivery_notes, " +
   "release_at, cap_per_customer, tags, seo_title, seo_description, " +
   "category:categories!category_id(name, parent:categories!parent_id(name)), " +
-  "variants(id, style, colour, size, sku, price, compare_at, sale_price, sale_starts_at, sale_ends_at, availability, lead_days)";
+  "variants(id, style, colour, size, sku, price, compare_at, sale_price, sale_starts_at, sale_ends_at, availability, lead_days, expected_on)";

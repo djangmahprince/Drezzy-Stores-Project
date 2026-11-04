@@ -3,7 +3,8 @@
 import { updateTag } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { availabilityToDb, audienceToDb } from "@/lib/catalogue/build";
-import { groupProducts, makeSku, parseCsv, resolveCategory, validateTable, variantSku, type ImportIssue } from "@/lib/catalogue/import";
+import { groupProducts, makeSku, resolveCategory, validateTable, variantSku, type ImportIssue } from "@/lib/catalogue/import";
+import { readTable } from "@/lib/catalogue/read-table";
 import { CATALOGUE_TAG } from "@/lib/catalogue/tags";
 import { can } from "@/lib/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -25,22 +26,6 @@ export type ImportResult = {
 const MAX_BYTES = 5 * 1024 * 1024;
 const fail = (mode: ImportResult["mode"], error: string): ImportResult => ({ ok: false, mode, error, issues: [], sample: [] });
 const key = (style: string | null | undefined, colour: string, size: string) => [(style ?? "").toLowerCase(), colour.toLowerCase(), size.toLowerCase()].join("|");
-
-/** Reads the first sheet of an .xlsx, or a .csv, into a table of strings. */
-async function readTable(file: File): Promise<string[][] | string> {
-  const name = file.name.toLowerCase();
-  if (name.endsWith(".csv")) return parseCsv(await file.text());
-  if (name.endsWith(".xlsx")) {
-    try {
-      const { readSheet } = await import("read-excel-file/node");
-      const data = await readSheet(Buffer.from(await file.arrayBuffer()), 1);
-      return data.map((r) => r.map((c) => (c === null || c === undefined ? "" : c instanceof Date ? c.toISOString().slice(0, 10) : String(c))));
-    } catch {
-      return "That does not look like a valid Excel (.xlsx) file. Try saving it again, or export it as CSV.";
-    }
-  }
-  return "Upload a .xlsx or .csv file. Older .xls files should be saved as .xlsx first.";
-}
 
 /**
  * Preview or commit a catalogue spreadsheet. Preview checks every row and reports what would change; commit writes it.

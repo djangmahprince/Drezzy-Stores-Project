@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCatalogue } from "@/components/CatalogueProvider";
 import { Icon } from "@/components/Icon";
 import { ProductCard } from "@/components/store/ProductCard";
@@ -8,6 +8,7 @@ import { compareSizes } from "@/lib/catalogue/build";
 import type { Product } from "@/lib/catalogue/types";
 import { formatGHS } from "@/lib/data";
 import { searchProducts } from "@/lib/search";
+import { track } from "@/lib/track";
 
 type Sort = "newest" | "price-asc" | "price-desc" | "popular";
 
@@ -120,6 +121,7 @@ function FilterPanel({ f, set, facets }: { f: Filters; set: (n: Filters) => void
 
 export function ShopBrowser({ initialCategory, initialQuery }: { initialCategory: string; initialQuery: string }) {
   const { products } = useCatalogue();
+  useEffect(() => track("view_item_list", { category: initialCategory || "All" }), [initialCategory]);
   const facets = useMemo(() => facetsOf(products), [products]);
   const categoryTabs = useMemo(() => {
     // the five categories always show, even before a category has products

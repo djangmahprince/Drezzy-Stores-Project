@@ -16,12 +16,11 @@ import { availabilitySummary } from "@/lib/catalogue/build";
 import { getCatalogue } from "@/lib/catalogue/server";
 import { formatGHS } from "@/lib/data";
 
+// Cache Components needs at least one path to check the route at build time; a slug nobody uses renders the 404 page.
+// Cache Components needs at least one path to check the route at build time. A slug nobody uses renders the 404 page.
 export async function generateStaticParams() {
-  try {
-    return (await getArticles()).map((a) => ({ slug: a.slug }));
-  } catch {
-    return []; // the database is unreachable at build time: pages are rendered on first request instead
-  }
+  const slugs = await getArticles().then((list) => list.map((x) => x.slug)).catch(() => [] as string[]);
+  return (slugs.length ? slugs : ["__placeholder__"]).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

@@ -1,17 +1,14 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Column } from "@/lib/export/csv";
+import { exportKinds, kindLabels, type ExportKind } from "@/lib/export/kinds";
 
 type Row = Record<string, unknown>;
 export type Dataset = { title: string; columns: Column<Row>[]; rows: Row[] };
 export type Filters = { from?: string; to?: string; status?: string; region?: string; channel?: string; q?: string; month?: string; tag?: string; source?: string };
 
-export const exportKinds = ["orders", "customers", "money", "catalogue", "suppliers", "expenses", "targets", "reviews", "subscribers", "analytics", "feedback"] as const;
-export type ExportKind = (typeof exportKinds)[number];
-export const kindLabels: Record<ExportKind, string> = {
-  orders: "Orders", customers: "Customers", money: "Money in and out", catalogue: "Catalogue", suppliers: "Suppliers", expenses: "Expenses",
-  targets: "Targets and progress", reviews: "Reviews", subscribers: "Newsletter subscribers", analytics: "KPI summary", feedback: "Site feedback",
-};
+export { exportKinds, kindLabels };
+export type { ExportKind };
 
 const ghs = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 const one = <T,>(v: T | T[] | null | undefined) => (Array.isArray(v) ? v[0] : v) ?? null;

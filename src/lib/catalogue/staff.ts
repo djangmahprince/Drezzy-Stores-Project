@@ -2,7 +2,7 @@ import "server-only";
 import { requireStaff } from "@/lib/auth";
 import { buildProduct, availabilityFromDb, audienceFromDb, defaultArt } from "@/lib/catalogue/build";
 import { sampleDefs, variantsOf } from "@/lib/catalogue/sample";
-import type { ProductEdit, StaffCatalogue, StaffProduct, StaffVariant, SupplierRow } from "@/lib/catalogue/staff-types";
+import type { ProductEdit, StaffCatalogue, StaffProduct, StaffVariant, SupplierOrderLine, SupplierRow } from "@/lib/catalogue/staff-types";
 import type { Art, Product } from "@/lib/catalogue/types";
 import { can, canSeeCosts } from "@/lib/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -79,7 +79,7 @@ export async function getStaffCatalogue(): Promise<StaffCatalogue> {
     const products: StaffProduct[] = sampleDefs.map((d) => {
       const unchecked = d.slug === "nike-sb-dunk-low" || d.slug === "dictator-1976-shirt";
       const variants: StaffVariant[] = variantsOf(d).map((v) => ({
-        ...v, id: v.sku, preferredSupplierId: "demo-a", offers: [], lastCheckedAt: unchecked ? undefined : "2026-10-20T08:00:00Z",
+        ...v, id: v.sku, preferredSupplierId: "demo-a", offers: [], lastCheckedAt: unchecked ? undefined : new Date().toISOString(),
       }));
       const base = buildProduct(
         { slug: d.slug, sku: d.sku, name: d.name, brand: d.brand, category: d.category, subcategory: d.subcategory, audience: d.audience, isNew: d.isNew, popular: d.popular, description: d.description, details: d.details, condition: "Brand new, original", art: d.art },
@@ -87,15 +87,19 @@ export async function getStaffCatalogue(): Promise<StaffCatalogue> {
       );
       return { ...base, id: d.slug, published: true, archived: false, tags: d.tags ?? [], variants: base.variants as StaffVariant[] };
     });
-    return { mode: "demo", products, suppliers, categories: [], rights, staleDays: 7 };
+    const at = "2026-11-06T09:10:00Z";
+    const line = (id: string, slug: string, status: SupplierOrderLine["status"], text: string, orderNumber: string): SupplierOrderLine => ({ id, productIds: [slug], status, text, at, orderNumber, supplier: "Supplier A", expected: null });
+    const supplierOrders = products.flatMap((p) => [line(`${p.slug}-1`, p.slug, "ordered", `EU 39 for DRZ-1036 · Supplier A · due today`, "DRZ-1036"), line(`${p.slug}-2`, p.slug, "received", `EU 40 for DRZ-1029 · Supplier A · receipt attached · cost posted to Money`, "DRZ-1029"), line(`${p.slug}-3`, p.slug, "failed", `EU 45 for DRZ-1012 · no supplier · customer refunded`, "DRZ-1012")]);
+    return { mode: "demo", products, suppliers, categories: [], rights, staleDays: 7, supplierOrders };
   }
 
   const supabase = await createClient();
-  const [{ data: rows }, suppliers, { data: cats }, { data: alerts }] = await Promise.all([
+  const [{ data: rows }, suppliers, { data: cats }, { data: alerts }, supplierOrders] = await Promise.all([
     supabase.from("products").select(SELECT).order("name"),
     getSuppliers(),
     supabase.from("categories").select("id, name, parent_id").order("sort"),
     supabase.from("app_settings").select("value").eq("key", "alerts").maybeSingle(),
+    getSupplierOrders(200),
   ]);
 
   return {
@@ -105,7 +109,35 @@ export async function getStaffCatalogue(): Promise<StaffCatalogue> {
     categories: (cats ?? []).map((c: { id: string; name: string; parent_id: string | null }) => ({ id: c.id, name: c.name, parentId: c.parent_id ?? undefined })),
     rights,
     staleDays: Number((alerts?.value as { stale_days?: number } | null)?.stale_days ?? 7),
+    supplierOrders,
   };
+}
+
+/** Supplier orders with what each one was for. Row-level security limits this to roles that keep availability. */
+export async function getSupplierOrders(limit: number): Promise<SupplierOrderLine[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("supplier_orders")
+    .select("id, status, ordered_at, received_at, expected_at, receipt_path, supplier:suppliers(name), order:orders(number), items:supplier_order_items(item:order_items(variant_label, sourcing, variant:variants(product_id)))")
+    .order("ordered_at", { ascending: false })
+    .limit(limit);
+  type Item = { variant_label: string; sourcing: string; variant: { product_id: string } | { product_id: string }[] | null };
+  type R = {
+    id: string; status: SupplierOrderLine["status"]; ordered_at: string; received_at: string | null; expected_at: string | null; receipt_path: string | null;
+    supplier: { name: string } | { name: string }[] | null; order: { number: string } | { number: string }[] | null;
+    items: { item: Item | Item[] | null }[] | null;
+  };
+  return ((data ?? []) as unknown as R[]).map((r) => {
+    const items = (r.items ?? []).map((i) => one(i.item)).filter((x) => !!x);
+    const orderNumber = one(r.order)?.number ?? "";
+    const supplier = one(r.supplier)?.name ?? "Supplier";
+    const tail = r.status === "ordered" && r.expected_at ? ` · due ${r.expected_at}` : r.receipt_path ? " · receipt attached" : "";
+    return {
+      id: r.id, status: r.status, at: r.received_at ?? r.ordered_at, orderNumber, supplier, expected: r.expected_at,
+      productIds: items.map((i) => one(i.variant)?.product_id).filter((x): x is string => !!x),
+      text: `${r.status === "ordered" && items.some((i) => i.sourcing === "received") ? "Partly received · " : ""}${items.map((i) => i.variant_label).join(", ") || "Items"} for ${orderNumber} · ${supplier}${tail}`,
+    };
+  });
 }
 
 /** The supplier list with everything the PRD keeps about each one. Row-level security applies. */

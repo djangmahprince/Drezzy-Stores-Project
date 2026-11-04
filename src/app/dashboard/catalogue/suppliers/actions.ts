@@ -17,7 +17,7 @@ export async function saveSupplier(_prev: SupplierState, fd: FormData): Promise<
   const clean = (k: string) => String(fd.get(k) ?? "").trim() || null;
   if (name.length < 2) return { error: "Give the supplier a name." };
 
-  const row = { name, phone: clean("phone"), whatsapp: clean("whatsapp"), notes: clean("notes"), active: fd.get("active") !== "false" };
+  const row = { name, phone: clean("phone"), whatsapp: clean("whatsapp"), notes: clean("notes"), contact_person: clean("contactPerson"), location: clean("location"), supplies: clean("supplies"), trusted: fd.get("trusted") === "on", active: fd.get("active") !== "false" };
   const supabase = await createClient();
   const { data, error } = id
     ? await supabase.from("suppliers").update(row).eq("id", id).select("id").maybeSingle()

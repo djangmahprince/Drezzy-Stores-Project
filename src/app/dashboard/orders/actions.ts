@@ -56,6 +56,11 @@ export async function receiveSupplierOrderAction(id: string): Promise<ActionResu
   return rpc("receive_supplier_order", { p_supplier_order: id, p_receipt: null });
 }
 
+/** Part of a supplier order arrived. When the last item is in, the order closes and its cost reaches Money. */
+export async function receiveSupplierItemsAction(id: string, itemIds: string[]): Promise<ActionResult> {
+  return rpc("receive_supplier_items", { p_supplier_order: id, p_items: itemIds });
+}
+
 const RECEIPT_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf" };
 
 /** Checks a chosen receipt and uploads it to the private bucket. Returns the stored path, or a plain-English problem. */

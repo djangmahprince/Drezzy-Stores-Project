@@ -6,12 +6,10 @@ import { getCatalogue } from "@/lib/catalogue/server";
 import type { Product } from "@/lib/catalogue/types";
 import { getSiteContent, type Collection } from "@/lib/site/server";
 
+// Cache Components needs at least one path to check the route at build time. A slug nobody uses renders the 404 page.
 export async function generateStaticParams() {
-  try {
-    return (await getSiteContent()).collections.map((c) => ({ slug: c.slug }));
-  } catch {
-    return [];
-  }
+  const slugs = await getSiteContent().then((c) => c.collections.map((x) => x.slug)).catch(() => [] as string[]);
+  return (slugs.length ? slugs : ["__placeholder__"]).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
