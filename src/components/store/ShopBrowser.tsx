@@ -16,21 +16,23 @@ type Filters = {
   audience: string[];
   brands: string[];
   sizes: string[];
+  colours: string[];
   maxPrice: number | null;
   availableOnly: boolean;
 };
 
-type Facets = { brands: string[]; sizes: string[]; priceCap: number };
+type Facets = { brands: string[]; sizes: string[]; colours: string[]; priceCap: number };
 
 function facetsOf(products: Product[]): Facets {
   return {
     brands: [...new Set(products.map((p) => p.brand))].sort(),
     sizes: [...new Set(products.flatMap((p) => p.sizes.map((s) => s.size)))].sort(compareSizes),
+    colours: [...new Set(products.flatMap((p) => p.colours))].sort(),
     priceCap: Math.max(50, ...products.map((p) => p.price)),
   };
 }
 
-const empty = (category: string): Filters => ({ category, audience: [], brands: [], sizes: [], maxPrice: null, availableOnly: false });
+const empty = (category: string): Filters => ({ category, audience: [], brands: [], sizes: [], colours: [], maxPrice: null, availableOnly: false });
 
 function matches(p: Product, f: Filters) {
   if (f.category === "Ladies sneakers") {
@@ -40,6 +42,7 @@ function matches(p: Product, f: Filters) {
   if (f.audience.length && !f.audience.some((a) => (a === "Men" ? /Men/.test(p.audience) : /ladies|Ladies/.test(p.audience)) || p.audience === "Unisex")) return false;
   if (f.brands.length && !f.brands.includes(p.brand)) return false;
   if (f.sizes.length && !p.sizes.some((s) => f.sizes.includes(s.size) && s.availability !== "Unavailable")) return false;
+  if (f.colours.length && !p.colours.some((c) => f.colours.includes(c))) return false;
   if (f.maxPrice !== null && p.price > f.maxPrice) return false;
   if (f.availableOnly && !p.sizes.some((s) => s.availability === "Available")) return false;
   return true;
@@ -71,6 +74,14 @@ function FilterPanel({ f, set, facets }: { f: Filters; set: (n: Filters) => void
           {["Men", "Ladies"].map((a) => <Toggle key={a} on={f.audience.includes(a)} onClick={() => set({ ...f, audience: toggleIn(f.audience, a) })}>{a}</Toggle>)}
         </div>
       </fieldset>
+      {facets.colours.length > 1 && (
+        <fieldset>
+          <legend className="mb-2 text-sm font-semibold">Colour</legend>
+          <div className="flex flex-wrap gap-2">
+            {facets.colours.map((c) => <Toggle key={c} on={f.colours.includes(c)} onClick={() => set({ ...f, colours: toggleIn(f.colours, c) })}>{c}</Toggle>)}
+          </div>
+        </fieldset>
+      )}
       <fieldset>
         <legend className="mb-2 text-sm font-semibold">Brand</legend>
         <div className="flex flex-wrap gap-2">
@@ -111,9 +122,9 @@ export function ShopBrowser({ initialCategory, initialQuery }: { initialCategory
   const { products } = useCatalogue();
   const facets = useMemo(() => facetsOf(products), [products]);
   const categoryTabs = useMemo(() => {
-    const tops = [...new Set(products.map((p) => p.category))];
-    const ladies = products.some((p) => p.category === "Sneakers" && (p.audience === "Ladies" || p.audience === "Men and ladies"));
-    return ["All", ...tops, ...(ladies ? ["Ladies sneakers"] : [])];
+    // the five categories always show, even before a category has products
+    const known = ["Sneakers", "Shoes", "Shirts", "Loafers", "Watches"];
+    return ["All", ...known, ...[...new Set(products.map((p) => p.category))].filter((c) => !known.includes(c))];
   }, [products]);
   const [f, setF] = useState<Filters>(empty(categoryTabs.includes(initialCategory) ? initialCategory : "All"));
   const [sort, setSort] = useState<Sort>("newest");
@@ -200,7 +211,7 @@ export function ShopBrowser({ initialCategory, initialQuery }: { initialCategory
           {list.length === 0 ? (
             <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
               <span className="flex size-14 items-center justify-center rounded-full bg-card text-navy"><Icon name="search" size={26} /></span>
-              <p className="text-lg font-semibold">Nothing matches that yet</p>
+              <p className="text-lg font-semibold">{products.some((p) => p.category === f.category) || f.category === "All" ? "Nothing matches that yet" : `New ${f.category.toLowerCase()} are on the way`}</p>
               <p className="max-w-sm text-sm text-text2">Try removing a filter, or ask us on WhatsApp. We can source most pairs on request.</p>
               <button type="button" onClick={reset} className="btn-primary mt-1">Clear filters</button>
             </div>

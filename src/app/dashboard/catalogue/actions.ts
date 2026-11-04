@@ -44,6 +44,7 @@ export async function saveVariants(changes: VariantChange[]): Promise<SaveResult
     if (c.availability !== undefined) patch.availability = availabilityToDb(c.availability);
     if (c.leadDays !== undefined) patch.lead_days = c.leadDays;
     if (c.supplierId !== undefined) patch.preferred_supplier_id = c.supplierId;
+    if (c.expectedOn !== undefined) patch.expected_on = c.expectedOn;
     if (c.markChecked) patch.last_checked_at = new Date().toISOString();
 
     if (Object.keys(patch).length > 0) {
@@ -88,7 +89,7 @@ export async function setProductPublished(productId: string, published: boolean)
   return { ok: true };
 }
 
-export type CreateState = { error?: string; ok?: { slug: string; variants: number } };
+export type CreateState = { error?: string; ok?: { id: string; slug: string; variants: number } };
 
 const list = (v: FormDataEntryValue | null) =>
   String(v ?? "").split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
@@ -159,5 +160,5 @@ export async function createProduct(_prev: CreateState, fd: FormData): Promise<C
   }
 
   updateTag(CATALOGUE_TAG);
-  return { ok: { slug, variants: rows.length } };
+  return { ok: { id: product.id, slug, variants: rows.length } };
 }

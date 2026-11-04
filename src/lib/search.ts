@@ -47,4 +47,4 @@ export function searchProducts(products: Product[], query: string): Product[] {
     .map((x) => x.p);
 }
 
-export const suggestions = ["Jordan", "Nike Dunk", "New Balance", "Denim set", "Watches", "Slides"];
+export const suggestions = ["Samba", "Dunk", "Topanga", "Shirts", "Loafers", "Watches"];

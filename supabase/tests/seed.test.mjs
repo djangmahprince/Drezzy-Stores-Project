@@ -39,7 +39,7 @@ ok("every seeded product has a category", (await db.query("select count(*)::int 
 await db.exec("set role anon");
 const rows = (await db.query("select slug from public.products order by slug")).rows;
 ok("a shopper can read the seeded catalogue", rows.length === sampleProducts.length);
-const v = (await db.query("select price, availability, lead_days from public.variants where sku = 'AJ1-HI-TB-45'")).rows[0];
+const v = (await db.query("select price, availability, lead_days from public.variants where sku = 'NK-SBD-45'")).rows[0];
 ok("a sold-out size is stored as unavailable", v?.availability === "unavailable", JSON.stringify(v));
 ok("a shopper still cannot read costs or suppliers", !(await db.query("select * from public.supplier_offers").then(() => true).catch(() => false)));
 await db.exec("reset role");

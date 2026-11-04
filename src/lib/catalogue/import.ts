@@ -11,7 +11,7 @@ export const TEMPLATE_HEADERS = [
 export const TEMPLATE_EXAMPLE_ROWS: string[][] = [
   ["Nike Dunk", "Nike", "Sneakers > Men", "Men and ladies", "Low", "Black / White", "42", "", "420", "", "Available", "2", "Supplier A", "300", "The easiest sneaker in the rack to style."],
   ["Nike Dunk", "Nike", "Sneakers > Men", "Men and ladies", "Low", "Black / White", "43", "", "420", "", "Limited", "2", "Supplier A", "300", ""],
-  ["Navy cap", "Drezzy", "Accessories > Caps", "Unisex", "", "Navy", "One size", "", "90", "", "Available", "2", "Supplier B", "55", "A structured six-panel cap."],
+  ["Steel watch", "Drezzy", "Watches", "Unisex", "", "Steel", "One size", "", "90", "", "Available", "2", "Supplier B", "55", "A structured six-panel cap."],
 ];
 
 export const MAX_ROWS = 5000;

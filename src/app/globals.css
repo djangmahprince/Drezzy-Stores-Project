@@ -77,3 +77,23 @@ body {
 @utility label-wide {
     @apply text-[11px] font-medium uppercase tracking-[0.6em];
   }
+
+/* Staff dashboard: dark theme and compact tables (FR-DB-007). Switched on the <html> element by the top bar. */
+html[data-dash-dark] {
+  --page: #11131c;
+  --card: #1b1e2b;
+  --line: #2c3043;
+  --ink: #eceef5;
+  --text-2: #a3a8bd;
+  --muted: #7d8399;
+  color-scheme: dark;
+}
+html[data-dash-dark] body { background: var(--page); color: var(--ink); }
+html[data-dash-dark] .bg-white { background-color: #171a26; }
+html[data-dash-dark] .text-navy { color: #b9c4ff; }
+html[data-dash-dark] .text-ink { color: var(--ink); }
+html[data-dash-dark] .field { background-color: #11131c; color: var(--ink); }
+html[data-dash-dark] .btn-outline { background-color: #171a26; color: #dbe1ff; }
+html[data-dash-dark] .bg-\[\#e6eaf8\], html[data-dash-dark] .bg-\[\#eef1fb\] { background-color: #232a4a; }
+html[data-dash-compact] table td, html[data-dash-compact] table th { padding-top: 0.35rem; padding-bottom: 0.35rem; }
+html[data-dash-compact] .card { --tw-space: 0; }

@@ -1,31 +1,28 @@
+import Link from "next/link";
 import { Suspense } from "react";
-import { PageHead, Pill, Table } from "@/components/dashboard/DashShell";
+import { CustomerDirectory } from "@/components/dashboard/CustomerDirectory";
+import { PageHead, Table } from "@/components/dashboard/DashShell";
 import { Guard } from "@/components/dashboard/Guard";
-import { getCustomers } from "@/lib/customers/staff";
-import { formatGHS } from "@/lib/data";
+import { requireStaff } from "@/lib/auth";
+import { zones } from "@/lib/data";
+import { can } from "@/lib/permissions";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const metadata = { title: "Customers" };
 
-const phone = (p: string) => p.replace(/^\+233(\d{2})(\d{3})(\d{4})$/, "+233 $1 $2 $3");
-const day = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-GH", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Accra" }).format(new Date(iso)) : "–");
-
-async function Live({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
-  const d = await getCustomers(q ?? "");
-  const head = d.deliveryOnly ? ["Name", "Phone", "Last delivery region", "Orders"] : ["Name", "Phone", "Email", "Source", "Orders", "Paid in total", "Last order"];
+async function Live() {
+  const me = await requireStaff();
+  const full = can(me.permissions, "customers", "edit") && me.permissions.customers?.scope === "all";
   return (
     <>
-      <form className="mb-3 flex gap-2" role="search">
-        <input name="q" defaultValue={d.q} aria-label="Search customers" placeholder="Search by name, phone or email" className="field !min-h-10 max-w-sm" />
-        <button className="btn-outline !min-h-10">Search</button>
-      </form>
-      {d.rows.length === 0 ? <p className="card p-8 text-center text-sm text-text2">{d.q ? "No customers match that search." : "No customers yet. They appear here when someone orders."}</p> : (
-        <Table head={head} rows={d.rows.map((c) => d.deliveryOnly
-          ? [c.name, phone(c.phone), c.region ?? "–", String(c.orders)]
-          : [c.name, phone(c.phone), c.email ?? "–", c.source ?? "–", <span key={c.id}>{c.orders} {c.orders > 1 && <Pill tone="info">Repeat</Pill>}</span>, formatGHS(c.spent), day(c.last)])} />
+      {full && (
+        <div className="-mt-3 mb-4 flex flex-wrap gap-2">
+          <Link href="/dashboard/customers/import" className="btn-outline !min-h-10">Import from CSV</Link>
+          <Link href="/dashboard/customers/requests" className="btn-outline !min-h-10">Data requests</Link>
+          <Link href="/dashboard/support" className="btn-outline !min-h-10">Support inbox</Link>
+        </div>
       )}
-      {d.truncated && <p className="mt-2 text-xs text-text2">Showing the newest 200. Search to narrow it down.</p>}
+      <CustomerDirectory canExport={can(me.permissions, "exports", "export")} canMerge={full} regions={zones.map((z) => z.region)} />
     </>
   );
 }
@@ -42,14 +39,14 @@ function Sample() {
   );
 }
 
-export default function Customers({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default function Customers() {
   return (
     <Guard module="customers">
       {isSupabaseConfigured ? (
         <>
-          <PageHead real title="Customers" sub="One record per customer, whatever channel they used" />
+          <PageHead real title="Customers" sub="One record per customer, whatever channel they used. Tick two to merge duplicates." />
           <Suspense fallback={<div className="h-64 animate-pulse rounded-[12px] bg-white" aria-busy="true" />}>
-            <Live searchParams={searchParams} />
+            <Live />
           </Suspense>
         </>
       ) : (

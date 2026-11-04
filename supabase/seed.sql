@@ -4,239 +4,90 @@
 
 insert into public.suppliers (name, notes) values ('Supplier A', 'Sample supplier'), ('Supplier B', 'Sample supplier') on conflict (name) do nothing;
 
--- Air Jordan 1 Retro High OG "Triple Black"
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'air-jordan-1-retro-high-og-triple-black', 'AJ1-HI-TB', 'Air Jordan 1 Retro High OG "Triple Black"', 'Jordan', c.id, 'men_and_ladies'::public.audience, 'The high-top that started it all, in an all-black colourway that goes with everything. Leather upper, padded collar and a cushioned sole.', array['Brand new, original', 'Runs true to size', 'Comes in the original box']::text[], true, 95, true, '{"kind":"sneaker","tone":"navy","upper":"#14161f","accent":"#3b3f52"}'::jsonb
+-- adidas Samba
+insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art, images, tags)
+select 'adidas-samba', 'AD-SMB', 'adidas Samba', 'adidas', c.id, 'men_and_ladies'::public.audience, 'The terrace classic: white leather, black stripes, a grey suede toe and the gum sole everyone is wearing. Dress it up or down.', array['Brand new, original', 'Leather upper, suede toe', 'Gum rubber sole']::text[], true, 99, true, '{"kind":"sneaker","tone":"navy","upper":"#f4f4f6","accent":"#14161f"}'::jsonb, array['/products/adidas-samba.webp']::text[], array['Streetwear', 'Classic', 'Campus']::text[]
 from public.categories c where c.slug = 'sneakers-men'
 on conflict (slug) do nothing;
 insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
 select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
 from public.products p, (values
-  (null::text, 'Triple Black', '39', 'AJ1-HI-TB-39', 400, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple Black', '40', 'AJ1-HI-TB-40', 400, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple Black', '41', 'AJ1-HI-TB-41', 400, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple Black', '42', 'AJ1-HI-TB-42', 400, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple Black', '43', 'AJ1-HI-TB-43', 400, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple Black', '44', 'AJ1-HI-TB-44', 400, null::numeric, 'limited'::public.availability, 2),
-  (null::text, 'Triple Black', '45', 'AJ1-HI-TB-45', 400, null::numeric, 'unavailable'::public.availability, 2)
+  (null::text, 'White / Black / Gum', '39', 'AD-SMB-39', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'White / Black / Gum', '40', 'AD-SMB-40', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'White / Black / Gum', '41', 'AD-SMB-41', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'White / Black / Gum', '42', 'AD-SMB-42', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'White / Black / Gum', '43', 'AD-SMB-43', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'White / Black / Gum', '44', 'AD-SMB-44', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'White / Black / Gum', '45', 'AD-SMB-45', 450, null::numeric, 'available'::public.availability, 2)
 ) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'air-jordan-1-retro-high-og-triple-black'
+where p.slug = 'adidas-samba'
 on conflict (sku) do nothing;
 
--- New Balance 2000
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'new-balance-2000', 'NB-2000', 'New Balance 2000', 'New Balance', c.id, 'men'::public.audience, 'A clean running-inspired shape with a soft suede and mesh upper. Light enough for all-day wear.', array['Brand new, original', 'Runs slightly narrow, size up if between sizes', 'Comes in the original box']::text[], true, 80, true, '{"kind":"sneaker","tone":"grey","upper":"#9aa0b4","accent":"#00115b"}'::jsonb
+-- adidas Topanga
+insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art, images, tags)
+select 'adidas-topanga', 'AD-TPG', 'adidas Topanga', 'adidas', c.id, 'men_and_ladies'::public.audience, 'Clean all-white leather with gold Topanga lettering and a chunky crepe-style sole. A sharp, low-key pair that goes with everything.', array['Brand new, original', 'Soft leather upper', 'Comes in the original box']::text[], true, 92, true, '{"kind":"sneaker","tone":"blue","upper":"#fafafc","accent":"#d5d7e0"}'::jsonb, array['/products/adidas-topanga.webp']::text[], array['Minimal', 'Smart casual']::text[]
 from public.categories c where c.slug = 'sneakers-men'
 on conflict (slug) do nothing;
 insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
 select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
 from public.products p, (values
-  (null::text, 'Grey / Navy', '39', 'NB-2000-39', 450, null::numeric, 'unavailable'::public.availability, 2),
-  (null::text, 'Grey / Navy', '40', 'NB-2000-40', 450, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Grey / Navy', '41', 'NB-2000-41', 450, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Grey / Navy', '42', 'NB-2000-42', 450, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Grey / Navy', '43', 'NB-2000-43', 450, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Grey / Navy', '44', 'NB-2000-44', 450, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Grey / Navy', '45', 'NB-2000-45', 450, null::numeric, 'available'::public.availability, 2)
+  (null::text, 'Triple White', '39', 'AD-TPG-39', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'Triple White', '40', 'AD-TPG-40', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'Triple White', '41', 'AD-TPG-41', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'Triple White', '42', 'AD-TPG-42', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'Triple White', '43', 'AD-TPG-43', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'Triple White', '44', 'AD-TPG-44', 450, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'Triple White', '45', 'AD-TPG-45', 450, null::numeric, 'available'::public.availability, 2)
 ) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'new-balance-2000'
+where p.slug = 'adidas-topanga'
 on conflict (sku) do nothing;
 
--- Air Jordan 4 Retro "Red Patent"
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'air-jordan-4-retro-red-patent', 'AJ4-RP', 'Air Jordan 4 Retro "Red Patent"', 'Jordan', c.id, 'men'::public.audience, 'A glossy patent finish with the classic mesh panels and wing eyelets. A statement pair.', array['Brand new, original', 'Runs true to size', 'Comes in the original box']::text[], true, 88, true, '{"kind":"sneaker","tone":"red","upper":"#b3172b","accent":"#ffffff"}'::jsonb
+-- Nike SB Dunk Low
+insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art, images, tags)
+select 'nike-sb-dunk-low', 'NK-SBD', 'Nike SB Dunk Low', 'Nike', c.id, 'men_and_ladies'::public.audience, 'White leather with a black swoosh and sole. The easiest sneaker in the rack to style, from the lecture hall to Friday night.', array['Brand new, original', 'Runs true to size', 'Comes in the original box']::text[], true, 96, true, '{"kind":"sneaker","tone":"navy","upper":"#f4f4f6","accent":"#14161f"}'::jsonb, array['/products/nike-sb-dunk-low.webp']::text[], array['Streetwear', 'Campus']::text[]
 from public.categories c where c.slug = 'sneakers-men'
 on conflict (slug) do nothing;
 insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
 select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
 from public.products p, (values
-  (null::text, 'Red Patent', '39', 'AJ4-RP-39', 400, null::numeric, 'available'::public.availability, 3),
-  (null::text, 'Red Patent', '40', 'AJ4-RP-40', 400, null::numeric, 'available'::public.availability, 3),
-  (null::text, 'Red Patent', '41', 'AJ4-RP-41', 400, null::numeric, 'limited'::public.availability, 3),
-  (null::text, 'Red Patent', '42', 'AJ4-RP-42', 400, null::numeric, 'available'::public.availability, 3),
-  (null::text, 'Red Patent', '43', 'AJ4-RP-43', 400, null::numeric, 'available'::public.availability, 3),
-  (null::text, 'Red Patent', '44', 'AJ4-RP-44', 400, null::numeric, 'unavailable'::public.availability, 3),
-  (null::text, 'Red Patent', '45', 'AJ4-RP-45', 400, null::numeric, 'unavailable'::public.availability, 3)
+  (null::text, 'White / Black', '39', 'NK-SBD-39', 420, null::numeric, 'unavailable'::public.availability, 2),
+  (null::text, 'White / Black', '40', 'NK-SBD-40', 420, null::numeric, 'available'::public.availability, 2),
+  (null::text, 'White / Black', '41', 'NK-SBD-41', 420, null::numeric, 'unavailable'::public.availability, 2),
+  (null::text, 'White / Black', '42', 'NK-SBD-42', 420, null::numeric, 'unavailable'::public.availability, 2),
+  (null::text, 'White / Black', '43', 'NK-SBD-43', 420, null::numeric, 'unavailable'::public.availability, 2),
+  (null::text, 'White / Black', '44', 'NK-SBD-44', 420, null::numeric, 'unavailable'::public.availability, 2),
+  (null::text, 'White / Black', '45', 'NK-SBD-45', 420, null::numeric, 'unavailable'::public.availability, 2)
 ) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'air-jordan-4-retro-red-patent'
+where p.slug = 'nike-sb-dunk-low'
 on conflict (sku) do nothing;
 
--- Nike Dunk
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'nike-dunk', 'DNK', 'Nike Dunk', 'Nike', c.id, 'men_and_ladies'::public.audience, 'The easiest sneaker in the rack to style. Pick the low, mid or high cut and the colourway that suits your fit.', array['Brand new, original', 'Runs true to size', 'Comes in the original box']::text[], false, 99, true, '{"kind":"sneaker","tone":"navy","upper":"#f4f4f6","accent":"#14161f"}'::jsonb
-from public.categories c where c.slug = 'sneakers-men'
+-- USA "Dictator 1976" collared shirt
+insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art, images, tags)
+select 'dictator-1976-shirt', 'DCT-76', 'USA "Dictator 1976" collared shirt', 'Dictator', c.id, 'unisex'::public.audience, 'An oversized long-sleeve collared shirt with a bold Dictator 1976 print, USA badge and script down the sleeves. One piece that carries the whole fit.', array['Brand new', 'Relaxed, oversized fit', 'Long sleeves with sleeve print']::text[], true, 85, true, '{"kind":"apparel","tone":"grey","upper":"#f2f3f8","accent":"#00115b"}'::jsonb, array['/products/dictator-1976-shirt.webp']::text[], array['Streetwear', 'Bold colours']::text[]
+from public.categories c where c.slug = 'shirts'
 on conflict (slug) do nothing;
 insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
 select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
 from public.products p, (values
-  ('Low', 'Black / White', '39', 'DNK-LO-BW-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Black / White', '40', 'DNK-LO-BW-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Black / White', '41', 'DNK-LO-BW-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Black / White', '42', 'DNK-LO-BW-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('Low', 'Black / White', '43', 'DNK-LO-BW-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Black / White', '44', 'DNK-LO-BW-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Black / White', '45', 'DNK-LO-BW-45', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Purple', '39', 'DNK-LO-P-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Purple', '40', 'DNK-LO-P-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Purple', '41', 'DNK-LO-P-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Purple', '42', 'DNK-LO-P-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('Low', 'Purple', '43', 'DNK-LO-P-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Purple', '44', 'DNK-LO-P-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Purple', '45', 'DNK-LO-P-45', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Brown', '39', 'DNK-LO-B-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Brown', '40', 'DNK-LO-B-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Brown', '41', 'DNK-LO-B-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Brown', '42', 'DNK-LO-B-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('Low', 'Brown', '43', 'DNK-LO-B-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Brown', '44', 'DNK-LO-B-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('Low', 'Brown', '45', 'DNK-LO-B-45', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Black / White', '39', 'DNK-MI-BW-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Black / White', '40', 'DNK-MI-BW-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Black / White', '41', 'DNK-MI-BW-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Black / White', '42', 'DNK-MI-BW-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('Mid', 'Black / White', '43', 'DNK-MI-BW-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Black / White', '44', 'DNK-MI-BW-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Black / White', '45', 'DNK-MI-BW-45', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Purple', '39', 'DNK-MI-P-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Purple', '40', 'DNK-MI-P-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Purple', '41', 'DNK-MI-P-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Purple', '42', 'DNK-MI-P-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('Mid', 'Purple', '43', 'DNK-MI-P-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Purple', '44', 'DNK-MI-P-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Purple', '45', 'DNK-MI-P-45', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Brown', '39', 'DNK-MI-B-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Brown', '40', 'DNK-MI-B-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Brown', '41', 'DNK-MI-B-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Brown', '42', 'DNK-MI-B-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('Mid', 'Brown', '43', 'DNK-MI-B-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Brown', '44', 'DNK-MI-B-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('Mid', 'Brown', '45', 'DNK-MI-B-45', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Black / White', '39', 'DNK-HI-BW-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Black / White', '40', 'DNK-HI-BW-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Black / White', '41', 'DNK-HI-BW-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Black / White', '42', 'DNK-HI-BW-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('High', 'Black / White', '43', 'DNK-HI-BW-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Black / White', '44', 'DNK-HI-BW-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Black / White', '45', 'DNK-HI-BW-45', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Purple', '39', 'DNK-HI-P-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Purple', '40', 'DNK-HI-P-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Purple', '41', 'DNK-HI-P-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Purple', '42', 'DNK-HI-P-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('High', 'Purple', '43', 'DNK-HI-P-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Purple', '44', 'DNK-HI-P-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Purple', '45', 'DNK-HI-P-45', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Brown', '39', 'DNK-HI-B-39', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Brown', '40', 'DNK-HI-B-40', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Brown', '41', 'DNK-HI-B-41', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Brown', '42', 'DNK-HI-B-42', 420, null::numeric, 'limited'::public.availability, 2),
-  ('High', 'Brown', '43', 'DNK-HI-B-43', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Brown', '44', 'DNK-HI-B-44', 420, null::numeric, 'available'::public.availability, 2),
-  ('High', 'Brown', '45', 'DNK-HI-B-45', 420, null::numeric, 'available'::public.availability, 2)
+  (null::text, 'White / Black', 'M', 'DCT-76-M', 250, null::numeric, 'available'::public.availability, 3),
+  (null::text, 'White / Black', 'L', 'DCT-76-L', 250, null::numeric, 'available'::public.availability, 3),
+  (null::text, 'White / Black', 'XL', 'DCT-76-XL', 250, null::numeric, 'available'::public.availability, 3),
+  (null::text, 'White / Black', 'XXL', 'DCT-76-XXL', 250, null::numeric, 'available'::public.availability, 3)
 ) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'nike-dunk'
+where p.slug = 'dictator-1976-shirt'
 on conflict (sku) do nothing;
 
--- Nike Air Force 1 Low
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'nike-air-force-1-low', 'AF1-LO', 'Nike Air Force 1 Low', 'Nike', c.id, 'men_and_ladies'::public.audience, 'Crisp, all-white and always in season. A thick sole and soft leather that keeps its shape.', array['Brand new, original', 'Runs true to size', 'Comes in the original box']::text[], false, 90, true, '{"kind":"sneaker","tone":"blue","upper":"#fafafc","accent":"#d5d7e0"}'::jsonb
-from public.categories c where c.slug = 'sneakers-ladies'
-on conflict (slug) do nothing;
-insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
-select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
-from public.products p, (values
-  (null::text, 'Triple White', '39', 'AF1-LO-39', 380, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple White', '40', 'AF1-LO-40', 380, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple White', '41', 'AF1-LO-41', 380, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple White', '42', 'AF1-LO-42', 380, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple White', '43', 'AF1-LO-43', 380, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple White', '44', 'AF1-LO-44', 380, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Triple White', '45', 'AF1-LO-45', 380, null::numeric, 'unavailable'::public.availability, 2)
-) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'nike-air-force-1-low'
-on conflict (sku) do nothing;
-
--- Denim set
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'denim-set', 'DRZ-DEN', 'Denim set', 'Drezzy', c.id, 'men'::public.audience, 'A matching jacket and jeans in heavy denim. Roll the hem once and wear it with a clean pair of Dunks.', array['Two-piece set', 'Cotton denim', 'Machine wash cold, inside out']::text[], false, 70, true, '{"kind":"apparel","tone":"blue","upper":"#2b4a8c","accent":"#9db4e8"}'::jsonb
-from public.categories c where c.slug = 'outfits-sets'
-on conflict (slug) do nothing;
-insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
-select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
-from public.products p, (values
-  (null::text, 'Indigo', 'S', 'DRZ-DEN-S', 350, null::numeric, 'available'::public.availability, 3),
-  (null::text, 'Indigo', 'M', 'DRZ-DEN-M', 350, null::numeric, 'available'::public.availability, 3),
-  (null::text, 'Indigo', 'L', 'DRZ-DEN-L', 350, null::numeric, 'available'::public.availability, 3),
-  (null::text, 'Indigo', 'XL', 'DRZ-DEN-XL', 350, null::numeric, 'available'::public.availability, 3),
-  (null::text, 'Indigo', 'XXL', 'DRZ-DEN-XXL', 350, null::numeric, 'limited'::public.availability, 3)
-) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'denim-set'
-on conflict (sku) do nothing;
-
--- Striped quarter-zip
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'striped-quarter-zip', 'DRZ-QZ', 'Striped quarter-zip', 'Drezzy', c.id, 'men'::public.audience, 'A knit quarter-zip with a clean stripe. Smart enough for church, relaxed enough for campus.', array['Cotton knit', 'Regular fit', 'Machine wash cold']::text[], false, 60, true, '{"kind":"apparel","tone":"navy","upper":"#f2f3f8","accent":"#00115b"}'::jsonb
-from public.categories c where c.slug = 'outfits-tops'
-on conflict (slug) do nothing;
-insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
-select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
-from public.products p, (values
-  (null::text, 'Navy / White', 'M', 'DRZ-QZ-M', 220, 260, 'available'::public.availability, 3),
-  (null::text, 'Navy / White', 'L', 'DRZ-QZ-L', 220, 260, 'available'::public.availability, 3),
-  (null::text, 'Navy / White', 'XL', 'DRZ-QZ-XL', 220, 260, 'available'::public.availability, 3)
-) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'striped-quarter-zip'
-on conflict (sku) do nothing;
-
--- Watch, blue strap
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'watch-blue-strap', 'DRZ-WT-BL', 'Watch, blue strap', 'Drezzy', c.id, 'unisex'::public.audience, 'A slim stainless case with a blue strap. Quartz movement, splash resistant.', array['Brand new, original', 'Adjustable strap', 'Comes in a gift box']::text[], false, 65, true, '{"kind":"watch","tone":"charcoal","upper":"#0036ff","accent":"#e9eaf0"}'::jsonb
+-- Hublot skeleton watch, blue strap
+insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art, images, tags)
+select 'hublot-skeleton-blue', 'HB-SKL-BL', 'Hublot skeleton watch, blue strap', 'Hublot', c.id, 'unisex'::public.audience, 'A steel case with an open skeleton dial and a deep blue strap. A statement on the wrist, day or night.', array['Brand new', 'Skeleton dial', 'Blue strap']::text[], true, 88, true, '{"kind":"watch","tone":"charcoal","upper":"#0036ff","accent":"#e9eaf0"}'::jsonb, array['/products/hublot-skeleton-blue.webp']::text[], array['Classic', 'Bold colours']::text[]
 from public.categories c where c.slug = 'watches'
 on conflict (slug) do nothing;
 insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
 select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
 from public.products p, (values
-  (null::text, 'Blue strap', 'One size', 'DRZ-WT-BL-Onesize', 280, null::numeric, 'available'::public.availability, 3)
+  (null::text, 'Steel / Blue', 'One size', 'HB-SKL-BL-Onesize', 600, null::numeric, 'available'::public.availability, 3)
 ) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'watch-blue-strap'
-on conflict (sku) do nothing;
-
--- Everyday slides
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'everyday-slides', 'DRZ-SL', 'Everyday slides', 'Drezzy', c.id, 'unisex'::public.audience, 'Soft, light slides for after the game, the beach or the walk to the shop.', array['Brand new', 'Runs true to size', 'Quick-dry foam']::text[], false, 55, true, '{"kind":"slide","tone":"grey","upper":"#14161f","accent":"#3b3f52"}'::jsonb
-from public.categories c where c.slug = 'slides-and-sandals'
-on conflict (slug) do nothing;
-insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
-select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
-from public.products p, (values
-  (null::text, 'Black', '39', 'DRZ-SL-B-39', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Black', '40', 'DRZ-SL-B-40', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Black', '41', 'DRZ-SL-B-41', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Black', '42', 'DRZ-SL-B-42', 150, null::numeric, 'limited'::public.availability, 2),
-  (null::text, 'Black', '43', 'DRZ-SL-B-43', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Black', '44', 'DRZ-SL-B-44', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'Black', '45', 'DRZ-SL-B-45', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'White', '39', 'DRZ-SL-W-39', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'White', '40', 'DRZ-SL-W-40', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'White', '41', 'DRZ-SL-W-41', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'White', '42', 'DRZ-SL-W-42', 150, null::numeric, 'limited'::public.availability, 2),
-  (null::text, 'White', '43', 'DRZ-SL-W-43', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'White', '44', 'DRZ-SL-W-44', 150, null::numeric, 'available'::public.availability, 2),
-  (null::text, 'White', '45', 'DRZ-SL-W-45', 150, null::numeric, 'available'::public.availability, 2)
-) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'everyday-slides'
-on conflict (sku) do nothing;
-
--- Navy cap
-insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)
-select 'navy-cap', 'DRZ-CAP-NV', 'Navy cap', 'Drezzy', c.id, 'unisex'::public.audience, 'A structured six-panel cap with an adjustable strap. Finishes any fit.', array['Brand new', 'Adjustable strap', 'Cotton twill']::text[], false, 50, true, '{"kind":"cap","tone":"navy","upper":"#00115b","accent":"#9cff00"}'::jsonb
-from public.categories c where c.slug = 'accessories-caps'
-on conflict (slug) do nothing;
-insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)
-select p.id, v.style, v.colour, v.size, v.sku, v.price, v.compare_at, v.availability, v.lead_days, (select id from public.suppliers where name = 'Supplier A')
-from public.products p, (values
-  (null::text, 'Navy', 'One size', 'DRZ-CAP-NV-Onesize', 90, null::numeric, 'available'::public.availability, 2)
-) as v (style, colour, size, sku, price, compare_at, availability, lead_days)
-where p.slug = 'navy-cap'
+where p.slug = 'hublot-skeleton-blue'
 on conflict (sku) do nothing;
 
 -- Drip School starter articles. Their layout is built into the shop, so they have no body here. Edit or replace them in the dashboard.

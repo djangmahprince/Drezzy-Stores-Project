@@ -14,6 +14,9 @@ export function placePayload(input: PlaceInput) {
     source_detail: input.sourceDetail,
     pay_method: input.payMethod,
     items: input.items.map((i) => ({ variant_id: i.variantId, qty: i.qty })),
+    ...(input.coupon ? { coupon: input.coupon } : {}),
+    ...(input.consents ? { consents: input.consents } : {}),
+    ...(input.attribution ? { attribution: input.attribution } : {}),
   };
 }
 

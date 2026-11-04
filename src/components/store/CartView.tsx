@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { ProductArt } from "@/components/ProductArt";
+import { ProductPhoto } from "@/components/ProductPhoto";
 import { QtyStepper } from "@/components/store/CartDrawer";
 import { computeTotals, removeLine, setQty, setRegion, usePricedCart } from "@/lib/cart";
 import { useCatalogue } from "@/components/CatalogueProvider";
@@ -33,7 +33,7 @@ export function CartView() {
           {priced.map((l) => (
             <li key={l.key} className="card flex gap-4 p-3 md:p-4">
               <Link href={`/product/${l.slug}`} className="size-24 shrink-0 overflow-hidden rounded-[12px] md:size-28">
-                <ProductArt {...l.product.art} label={l.product.name} />
+                <ProductPhoto product={l.product} label={l.product.name} />
               </Link>
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="flex justify-between gap-3">

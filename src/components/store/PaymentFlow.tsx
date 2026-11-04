@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import type { NextStep, PayChoice } from "@/lib/orders/types";
 import type { PaymentOptions } from "@/lib/payments/config";
 import { branches, formatGHS } from "@/lib/data";
+import { track } from "@/lib/track";
 
 const labels: Record<PayChoice, string> = { mtn: "MTN MoMo", telecel: "Telecel Cash", airtel: "AirtelTigo Money", card: "Visa or Mastercard", manual_momo: "Manual MoMo" };
 
@@ -34,6 +35,14 @@ export function PaymentFlow({
   const paid = useRef(false);
 
   const waiting = step.type === "prompt" || step.type === "otp" || step.type === "return" || checking;
+
+  // a failed or timed-out payment is an analytics event (PRD section 24), never shown to anyone with personal details
+  useEffect(() => {
+    if (step.type === "failed") track("payment_failed", { method, reason: "failed" });
+  }, [step.type, method]);
+  useEffect(() => {
+    if (timedOut) track("payment_failed", { method, reason: "timeout" });
+  }, [timedOut, method]);
 
   // Ask the order how it is doing every few seconds until it is paid.
   useEffect(() => {

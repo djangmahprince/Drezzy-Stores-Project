@@ -21,7 +21,10 @@ export function ProductForm({ categories }: { categories: { id: string; label: s
         <p className="text-sm text-text2">Product added as a draft</p>
         <p className="text-lg font-semibold">{state.ok.variants} variants created, all Unavailable</p>
         <p className="text-sm text-text2">Nothing is offered for sale until a sourcing officer confirms a supplier can provide each size. Open the catalogue to set availability, then publish.</p>
-        <Link href="/dashboard/catalogue" className="btn-primary">Open the catalogue</Link>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Link href={`/dashboard/catalogue/${state.ok.id}`} className="btn-primary">Add photos and details</Link>
+          <Link href="/dashboard/catalogue" className="btn-outline">Open the catalogue</Link>
+        </div>
       </div>
     );
   }

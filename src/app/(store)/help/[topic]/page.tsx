@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { RichBody } from "@/components/store/RichBody";
 import { branches } from "@/lib/data";
+import { getPage, getPageSlugs } from "@/lib/site/server";
 
 type Topic = { title: string; intro: string; body: React.ReactNode };
 
@@ -80,13 +82,63 @@ const topics: Record<string, Topic> = {
       </>
     ),
   },
+  about: {
+    title: "About Drezzy",
+    intro: "Your Outfits Solution. You order, we deliver, you drip.",
+    body: (
+      <>
+        <p>Drezzy Stores is a Ghanaian outfits business. We lead with sneakers, for men and ladies, and we also sell outfits and watches. Everything we sell is brand new and original.</p>
+        <h2>How we work</h2>
+        <p>We do not keep stock. When you order, we get your item from trusted suppliers and wholesalers, check it at our Accra or Kumasi branch, and deliver it to you anywhere in Ghana.</p>
+        <h2>Drip School</h2>
+        <p>Our <Link href="/drip-school">Drip School</Link> shows you how to wear what you buy: outfit guides, trends from Accra and Kumasi, and sizing help.</p>
+      </>
+    ),
+  },
+  faq: {
+    title: "Questions and answers",
+    intro: "The things customers ask us most.",
+    body: (
+      <>
+        <h2>Are your items original?</h2>
+        <p>Yes. Every item is brand new and original, and checked at our branch before it is delivered.</p>
+        <h2>Why do I pay before delivery?</h2>
+        <p>We order your item from a supplier once your payment is in, so we can promise it is really available. In Accra you can pay half now and half on delivery.</p>
+        <h2>How long does delivery take?</h2>
+        <p>Each product page shows an estimate for your region, including the time to get it from our supplier. See <Link href="/help/delivery">Delivery</Link>.</p>
+        <h2>What if my size is not available?</h2>
+        <p>Unavailable sizes are greyed out. Press &ldquo;Notify me&rdquo; and we will email you when it is back.</p>
+        <h2>What if you cannot get my item?</h2>
+        <p>We offer you an alternative or a full refund of what you paid. See <Link href="/help/order-issues">Order issues and refunds</Link>.</p>
+        <h2>How do I track my order?</h2>
+        <p>Open <Link href="/track">Track an order</Link> with your order number and phone number. No login needed.</p>
+      </>
+    ),
+  },
+  contact: {
+    title: "Contact",
+    intro: "A person is always one tap away.",
+    body: (
+      <>
+        <h2>Accra</h2>
+        <p>Call {branches.accra.call} · WhatsApp <a href={`https://wa.me/${branches.accra.wa}`}>{branches.accra.whatsapp}</a></p>
+        <h2>Kumasi</h2>
+        <p>Call or WhatsApp <a href={`https://wa.me/${branches.kumasi.wa}`}>{branches.kumasi.call}</a></p>
+        <h2>About an order</h2>
+        <p>Open your order on <Link href="/track">Track an order</Link> and send us a message there, so we have your order number.</p>
+        <h2>Your personal data</h2>
+        <p>To see, correct or delete what we hold about you, use <Link href="/privacy-requests">Your data</Link>.</p>
+      </>
+    ),
+  },
   privacy: {
     title: "Privacy",
     intro: "How we handle your information.",
     body: (
       <>
         <p>We only collect what we need to deliver your order and look after you: your name, phone number, email and delivery address. We do not store your card details or mobile money PIN; payments are handled by Paystack.</p>
-        <p>Our full privacy policy is being finalised before launch. Questions in the meantime? WhatsApp {branches.accra.whatsapp}.</p>
+        <p>We use your details to deliver your order, send updates you asked for, and keep money records the law requires. We never sell your data. Marketing messages are only sent with your consent, and every one has an unsubscribe link.</p>
+        <p>You can ask to see, correct or delete your data on <Link href="/privacy-requests">Your data</Link>. We answer within 30 days. Questions? WhatsApp {branches.accra.whatsapp}.</p>
       </>
     ),
   },
@@ -102,18 +154,23 @@ const topics: Record<string, Topic> = {
   },
 };
 
-export function generateStaticParams() {
-  return Object.keys(topics).map((topic) => ({ topic }));
+export async function generateStaticParams() {
+  const extra = await getPageSlugs().catch(() => [] as string[]);
+  return [...new Set([...Object.keys(topics), ...extra])].map((topic) => ({ topic }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ topic: string }> }): Promise<Metadata> {
   const { topic } = await params;
-  return topics[topic] ? { title: topics[topic].title } : {};
+  const page = await getPage(topic).catch(() => null);
+  if (page) return { title: page.seo_title ?? page.title, description: page.seo_description ?? undefined };
+  return topics[topic] ? { title: topics[topic].title, description: topics[topic].intro } : {};
 }
 
 async function HelpContent({ params }: { params: Promise<{ topic: string }> }) {
   const { topic } = await params;
-  const t = topics[topic];
+  // a page written in the dashboard (FR-CMS-005) takes the place of the built-in text
+  const page = await getPage(topic).catch(() => null);
+  const t: Topic | undefined = page ? { title: page.title, intro: page.seo_description ?? "", body: <RichBody body={page.body} headingClass="mt-8 text-[20px] font-bold" /> } : topics[topic];
   if (!t) notFound();
 
   return (

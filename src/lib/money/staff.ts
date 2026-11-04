@@ -16,14 +16,17 @@ export type MoneyData = {
   canAdd: boolean;
   /** Owner and Finance: a link to the salary records. */
   canSeeSalaries: boolean;
+  /** Finance and the Owner: other money in, close the month, rider cash, profit. */
+  canManage: boolean;
+  closed: boolean;
   /** Categories this person may record, in the form the expense action expects. */
   categories: { value: string; label: string }[];
 };
 
 const ALL = [
   { value: "supplier_costs", label: "Supplier costs" }, { value: "delivery_and_riders", label: "Delivery and riders" },
-  { value: "ads_and_promotion", label: "Ads and promotion" }, { value: "rent_and_utilities", label: "Rent and utilities" },
-  { value: "packaging", label: "Packaging" }, { value: "other", label: "Other" },
+  { value: "ads_and_promotion", label: "Ads and promotion" }, { value: "rent_and_utilities", label: "Rent" }, { value: "utilities", label: "Utilities" },
+  { value: "packaging", label: "Packaging" }, { value: "data_and_airtime", label: "Data and airtime" }, { value: "software_and_hosting", label: "Software and hosting" }, { value: "other", label: "Other" },
 ];
 
 const shift = (month: string, by: number) => {
@@ -55,6 +58,8 @@ export async function getMoney(month: string): Promise<MoneyData> {
     ledger: ((rows ?? []) as { at: string; direction: "in" | "out"; category: string; amount: number | string; branch: string; method: string; label: string; source: string }[]).map((r) => ({ ...r, amount: Number(r.amount) })),
     canAdd: can(me.permissions, "expenses", "create"),
     canSeeSalaries: can(me.permissions, "salary", "view"),
+    canManage: can(me.permissions, "expenses", "view") && !me.permissions.expenses?.restriction,
+    closed: !!(sum as { closed?: boolean } | null)?.closed,
     categories: ALL,
   };
 }

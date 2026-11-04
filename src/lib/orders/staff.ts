@@ -36,7 +36,7 @@ const rightsOf = (perms: Parameters<typeof can>[0]): OrderRights => ({
 });
 
 const LIST_SELECT =
-  "id, number, channel, branch, status, payment_state, payment_plan, total, balance_due, amount_paid, delivery_method, region, city, area, agent_name, courier, created_at, updated_at, " +
+  "id, number, channel, branch, status, payment_state, payment_plan, total, balance_due, amount_paid, delivery_method, region, city, area, agent_name, courier, created_at, updated_at, source, rider_name, " +
   "customer:customers(full_name, phone), items:order_items(product_name, variant_label, qty)";
 
 /** The orders this person may see. Row-level security already limits "own records only" roles to their own. */
@@ -110,7 +110,8 @@ export async function getOrderDetail(number: string): Promise<OrderDetail | null
   const { data } = await supabase
     .from("orders")
     .select("*, customer:customers(full_name, phone, email), items:order_items(*), events:order_events(*), payments(*), notes:order_notes(*), supplier_orders(*, supplier:suppliers(name), items:supplier_order_items(order_item_id), cost:supplier_order_costs(agreed_cost)), refunds(*)")
-    .eq("number", number.toUpperCase())
+    // alerts and QR labels link by the order's id; people type the number
+    .eq(/^[0-9a-f-]{36}$/i.test(number) ? "id" : "number", /^[0-9a-f-]{36}$/i.test(number) ? number : number.toUpperCase())
     .maybeSingle();
   if (!data) return null;
 

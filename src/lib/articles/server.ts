@@ -6,7 +6,11 @@ import type { ArtKind, Tone } from "@/lib/catalogue/types";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createPublicClient } from "@/lib/supabase/public";
 
-export type Article = { slug: string; type: string; minutes: number; title: string; intro: string; body: string | null; tone: Tone; kind: ArtKind };
+export type Article = {
+  slug: string; type: string; minutes: number; title: string; intro: string; body: string | null; tone: Tone; kind: ArtKind;
+  author_name?: string | null; publish_at?: string | null; tags?: string[]; featured?: boolean;
+  seo_title?: string | null; seo_description?: string | null; hero_image?: string | null; share_image?: string | null;
+};
 
 /**
  * Published Drip School articles, newest first. Cached; saving an article calls updateTag(ARTICLES_TAG).
@@ -20,7 +24,7 @@ export async function getArticles(): Promise<Article[]> {
   if (!isSupabaseConfigured) return fallback;
   const { data, error } = await createPublicClient()
     .from("articles")
-    .select("slug, type, minutes, title, intro, body, tone, kind")
+    .select("slug, type, minutes, title, intro, body, tone, kind, author_name, publish_at, tags, featured, seo_title, seo_description, hero_image, share_image")
     .eq("status", "published")
     .lte("publish_at", new Date().toISOString())
     .order("publish_at", { ascending: false });

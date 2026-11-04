@@ -31,8 +31,8 @@ async function Zones() {
       </>
     );
   }
-  const { data } = await (await createClient()).from("delivery_zones").select("region, fee, est_days, half_payment_allowed, active").order("sort");
-  const rows = (data ?? []).map((z) => ({ region: z.region as string, fee: Number(z.fee), days: z.est_days as number, half: z.half_payment_allowed as boolean, active: z.active as boolean }));
+  const { data } = await (await createClient()).from("delivery_zones").select("region, fee, est_days, half_payment_allowed, active, fee_on_arrival").order("sort");
+  const rows = (data ?? []).map((z) => ({ region: z.region as string, fee: Number(z.fee), days: z.est_days as number, half: z.half_payment_allowed as boolean, active: z.active as boolean, onArrival: z.fee_on_arrival as boolean }));
   return <ZoneEditor initial={rows} canEdit={can(me.permissions, "settings", "edit")} />;
 }
 

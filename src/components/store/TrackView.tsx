@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { trackOrderAction } from "@/app/(store)/checkout/actions";
+import { useCatalogue } from "@/components/CatalogueProvider";
 import { Icon } from "@/components/Icon";
+import { TrackExtras } from "@/components/store/TrackExtras";
+import { waNumber } from "@/lib/media";
 import { branches, formatGHS } from "@/lib/data";
 import { phoneKey, useOrders, type PlacedOrder } from "@/lib/orders";
 import { buildTrack, type TrackJson, type TrackView as View } from "@/lib/orders/track";
@@ -42,6 +45,7 @@ export function TrackView({ initialOrder = "", initialPhone = "" }: { initialOrd
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  const [foundPhone, setFoundPhone] = useState("");
   const [pending, start] = useTransition();
   const lookedUp = useRef<{ o: string; p: string } | null>(null);
 
@@ -52,6 +56,7 @@ export function TrackView({ initialOrder = "", initialPhone = "" }: { initialOrd
       const r = await trackOrderAction({ number: o, phone: p });
       if (r.ok) {
         setView(r.track);
+        setFoundPhone(p);
         setError(null);
       } else {
         setView(null);
@@ -85,7 +90,8 @@ export function TrackView({ initialOrder = "", initialPhone = "" }: { initialOrd
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view?.number, view?.stepNumber]);
 
-  const wa = (v: View) => `https://wa.me/${branches[v.helpBranch].wa}?text=${encodeURIComponent(`Hi Drezzy, I need help with ${v.number}`)}`;
+  const { site } = useCatalogue();
+  const wa = (v: View) => `https://wa.me/${site ? waNumber(v.helpBranch === "kumasi" ? site.kumasi.whatsapp : site.accra.whatsapp) : branches[v.helpBranch].wa}?text=${encodeURIComponent(`Hi Drezzy, I need help with ${v.number}`)}`;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -169,6 +175,7 @@ export function TrackView({ initialOrder = "", initialPhone = "" }: { initialOrd
             {view.balanceDue > 0 && <p className="mt-3 font-medium text-warning">Balance to pay on delivery: {formatGHS(view.balanceDue)}</p>}
           </div>
           <a href={wa(view)} target="_blank" rel="noopener noreferrer" className="btn-lime mt-4 w-full"><Icon name="chat" size={20} /> Need help? WhatsApp us about {view.number}</a>
+          {isSupabaseConfigured && foundPhone && <TrackExtras view={view} phone={foundPhone} />}
         </div>
       )}
     </div>

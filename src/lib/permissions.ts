@@ -58,6 +58,7 @@ export const dashNav: { href: string; label: string; modules: Module[] }[] = [
   { href: "/dashboard/dispatch", label: "Dispatch board", modules: ["orders"] },
   { href: "/dashboard/catalogue", label: "Catalogue and sourcing", modules: ["products", "availability"] },
   { href: "/dashboard/customers", label: "Customers", modules: ["customers"] },
+  { href: "/dashboard/support", label: "Support inbox", modules: ["customers"] },
   { href: "/dashboard/staff", label: "Staff and targets", modules: ["targets_view", "targets_set", "staff"] },
   { href: "/dashboard/money", label: "Money", modules: ["expenses", "salary"] },
   { href: "/dashboard/analytics", label: "Analytics", modules: ["analytics"] },

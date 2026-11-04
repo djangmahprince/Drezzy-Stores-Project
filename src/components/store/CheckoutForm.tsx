@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { checkoutPrefillAction, type Address } from "@/app/(store)/account/actions";
+import { checkoutDraftAction, couponAction } from "@/app/(store)/actions";
 import { placeOrderAction } from "@/app/(store)/checkout/actions";
 import { Icon } from "@/components/Icon";
-import { ProductArt } from "@/components/ProductArt";
+import { ProductPhoto } from "@/components/ProductPhoto";
 import { PaymentFlow } from "@/components/store/PaymentFlow";
 import type { PaymentOptions } from "@/lib/payments/config";
 import type { PayChoice, PlaceResult } from "@/lib/orders/types";
@@ -12,6 +14,7 @@ import { clearCart, computeTotals, setRegion, usePricedCart, type Method, type P
 import { useCatalogue } from "@/components/CatalogueProvider";
 import { branches, formatGHS, sources } from "@/lib/data";
 import { isGhanaPhone, placeOrder, rememberOrder, type PlacedOrder } from "@/lib/orders";
+import { getAttribution, sessionId, track } from "@/lib/track";
 
 type Pay = PayChoice;
 
@@ -28,17 +31,19 @@ const isMomoNetwork = (p: Pay) => p === "mtn" || p === "telecel" || p === "airte
 type Form = {
   name: string; phone: string; email: string;
   gift: boolean; receiverName: string; receiverPhone: string;
-  city: string; area: string; street: string; gps: string; note: string;
+  city: string; area: string; street: string; landmark: string; gps: string; note: string; lat: number | null; lng: number | null;
   method: Method; plan: Plan; pay: Pay;
-  momoSame: boolean; momo: string;
+  momoSame: boolean; momo: string; saveMomo: boolean;
   source: string; sourceDetail: string; terms: boolean;
+  updatesWhatsapp: boolean; updatesSms: boolean; marketing: boolean; remind: boolean;
 };
 
 const initial: Form = {
   name: "", phone: "", email: "", gift: false, receiverName: "", receiverPhone: "",
-  city: "", area: "", street: "", gps: "", note: "",
-  method: "home", plan: "full", pay: "mtn", momoSame: true, momo: "",
+  city: "", area: "", street: "", landmark: "", gps: "", note: "", lat: null, lng: null,
+  method: "home", plan: "full", pay: "mtn", momoSame: true, momo: "", saveMomo: false,
   source: "", sourceDetail: "", terms: false,
+  updatesWhatsapp: false, updatesSms: false, marketing: false, remind: false,
 };
 
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
@@ -56,6 +61,7 @@ function validate(f: Form): Record<string, string> {
     if (f.city.trim().length < 2) e.city = "Enter your city or town.";
     if (f.area.trim().length < 2) e.area = "Enter your area.";
     if (f.street.trim().length < 3) e.street = "Add a street or landmark so the rider can find you.";
+    if (f.gps && !/^[A-Z]{2}-?\d{3,4}-?\d{3,5}$/.test(f.gps)) e.gps = "That does not look like a Ghana Post GPS address (for example GA-123-4567).";
   }
   if (isMomoNetwork(f.pay) && !f.momoSame && !isGhanaPhone(f.momo)) e.momo = "Enter the mobile money number to charge.";
   if (!f.source) e.source = "Please tell us how you got to know Drezzy.";
@@ -125,13 +131,79 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
   const [phase, setPhase] = useState<"form" | "paying" | "placing" | "pay" | "done">("form");
   const [order, setOrder] = useState<PlacedOrder | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [coupon, setCoupon] = useState("");
+  const [discount, setDiscount] = useState<{ code: string; amount: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [saved, setSaved] = useState<Address[]>([]);
+  const [locMsg, setLocMsg] = useState<string | null>(null);
+
+  // a signed-in shopper's details and saved addresses fill the form (faster checkout, PRD section 10)
+  useEffect(() => {
+    if (!live) return;
+    void checkoutPrefillAction().then((d) => {
+      if (!d) return;
+      setSaved(d.addresses);
+      const a = d.addresses.find((x) => x.is_default) ?? d.addresses[0];
+      setF((x) => ({
+        ...x,
+        name: x.name || d.profile.full_name || "", phone: x.phone || (d.profile.phone ?? "").replace(/^\+233/, "0"), email: x.email || d.profile.email || "",
+        momo: d.profile.momo_number ? d.profile.momo_number.replace(/^\+233/, "0") : x.momo, momoSame: d.profile.momo_number ? false : x.momoSame,
+        updatesWhatsapp: d.profile.notify_whatsapp, updatesSms: d.profile.notify_sms,
+        ...(a ? { city: a.city, area: a.area ?? "", street: a.street, landmark: a.landmark ?? "", gps: a.gps_code ?? "", lat: a.lat, lng: a.lng } : {}),
+      }));
+      if (a) setRegion(a.region);
+    });
+  }, [live]);
+
+  function applyAddress(a: Address) {
+    setF((x) => ({ ...x, city: a.city, area: a.area ?? "", street: a.street, landmark: a.landmark ?? "", gps: a.gps_code ?? "", lat: a.lat, lng: a.lng, ...(a.label === "Receiver" && a.receiver_name ? { gift: true, receiverName: a.receiver_name, receiverPhone: a.receiver_phone ?? "" } : {}) }));
+    setRegion(a.region);
+  }
+
+  function locate() {
+    if (!navigator.geolocation) return setLocMsg("Your browser cannot share its location. Type the address instead.");
+    setLocMsg("Finding you…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { set("lat", Number(pos.coords.latitude.toFixed(6))); set("lng", Number(pos.coords.longitude.toFixed(6))); setLocMsg("Location pin added. The rider will see it."); },
+      () => setLocMsg("We could not get your location. Type the address instead."),
+      { enableHighAccuracy: true, timeout: 10_000 },
+    );
+  }
+
+  async function applyCoupon() {
+    if (!coupon.trim()) return;
+    setCouponMsg(null);
+    const r = await couponAction(coupon.trim(), priced.reduce((n, l) => n + l.lineTotal, 0), f.phone || undefined);
+    if (r.ok && r.data) {
+      setDiscount({ code: r.data.code, amount: r.data.discount });
+      setCouponMsg(`${r.data.code} applied.`);
+    } else {
+      setDiscount(null);
+      setCouponMsg(r.ok ? "That code is not valid." : r.error);
+    }
+  }
+
+  // "remind me if I do not finish": only with the shopper's say-so (abandoned cart, PRD section 18)
+  useEffect(() => {
+    if (!live || !emailOk(f.email)) return;
+    const sid = sessionId();
+    if (!sid) return;
+    const t = window.setTimeout(() => void checkoutDraftAction(f.email, sid, priced.map((l) => ({ slug: l.slug, size: l.size, qty: l.qty })), f.remind), 800);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, f.email, f.remind]);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((p) => ({ ...p, [k]: v }));
   const activeRegion = f.method === "pickup" ? "Greater Accra" : region;
   const { zones, zone: zoneOf } = useCatalogue();
   const t = computeTotals(priced, zoneOf(activeRegion), f.method, f.plan);
   const plan: Plan = t.canSplit ? f.plan : "full";
-  const totals = computeTotals(priced, zoneOf(activeRegion), f.method, plan);
+  const base = computeTotals(priced, zoneOf(activeRegion), f.method, plan);
+  const off = discount ? Math.min(discount.amount, base.subtotal) : 0;
+  const after = base.total - off;
+  // the database is what charges; this mirrors its rounding (half is rounded up to the pesewa)
+  const totals = { ...base, total: after, dueNow: plan === "half" && base.canSplit ? Math.ceil((after * 100) / 2) / 100 : after, dueLater: 0 };
+  totals.dueLater = Math.round((totals.total - totals.dueNow) * 100) / 100;
   const errors = useMemo(() => validate(f), [f]);
   const show = (k: string) => (attempted || touched[k] ? errors[k] : undefined);
   const touch = (k: string) => () => setTouched((p) => ({ ...p, [k]: true }));
@@ -141,6 +213,9 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setAttempted(true);
+    if (!errors.city && !errors.street) track("add_shipping_info", { region: activeRegion, fee: totals.fee, method: f.method });
+    track("add_payment_info", { method: f.pay, plan });
+    if (f.source) track("source_answer", { answer: f.source, detail: f.sourceDetail || undefined });
     const keys = Object.keys(errors);
     if (keys.length) {
       const el = formRef.current?.querySelector<HTMLElement>(`#${keys[0] === "terms" ? "terms" : `f-${keys[0]}`}`);
@@ -194,13 +269,19 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
     const res = await placeOrderAction({
       customer: { name: f.name, phone: f.phone, email: f.email },
       receiver: f.gift ? { name: f.receiverName, phone: f.receiverPhone } : null,
-      delivery: { method: f.method, region: activeRegion, city: f.city, area: f.area, street: f.street, gps: f.gps, note: f.note },
+      delivery: { method: f.method, region: activeRegion, city: f.city, area: f.area, street: f.street, gps: f.gps, note: f.note, landmark: f.landmark, lat: f.lat ?? undefined, lng: f.lng ?? undefined },
       plan,
       source: f.source,
       sourceDetail: f.sourceDetail,
       items,
       payMethod: f.pay,
       momoPhone: isMomoNetwork(f.pay) && !f.momoSame ? f.momo : undefined,
+      coupon: discount?.code,
+      consents: {
+        whatsapp: f.updatesWhatsapp, sms: f.updatesSms, marketing: f.marketing,
+        save_momo: f.saveMomo && isMomoNetwork(f.pay), momo_number: isMomoNetwork(f.pay) ? (f.momoSame ? f.phone : f.momo) : undefined,
+      },
+      attribution: getAttribution(),
     });
     if (!res.ok) {
       setSubmitError(res.error);
@@ -240,10 +321,12 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
 
   // The cart is only emptied once the payment is confirmed, so a failed payment keeps the bag (FR-CO-004).
   const onPaid = useCallback(() => {
+    track("purchase", { order: placed?.number, value: placed?.total, source: f.source });
     clearCart();
     setPhase("done");
     window.scrollTo({ top: 0 });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placed]);
 
   if (phase === "pay" && placed && live) {
     return <PaymentFlow number={placed.number} phone={f.phone} email={f.email} dueNow={placed.dueNow} balanceDue={placed.balanceDue} step={placed.next} options={live} onPaid={onPaid} />;
@@ -271,6 +354,13 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
           <Link href={`/track?order=${order.id}&phone=${encodeURIComponent(order.phone)}`} className="btn-primary">Track this order</Link>
           <Link href="/shop" className="btn-outline">Keep shopping</Link>
         </div>
+        {live && (
+          <div className="card mt-6 p-5 text-left">
+            <p className="font-semibold">Save this order to an account</p>
+            <p className="mt-1 text-sm text-text2">Create an account with {order.email || "the same email"} and this order, and any you place later, appear in My Drezzy on any device. You also get reward points.</p>
+            <Link href="/account?tab=signin" className="btn-outline mt-3 !min-h-10">Create my account</Link>
+          </div>
+        )}
         {!live && <p className="mt-6 text-xs text-text2">Demo checkout: no real payment was taken.</p>}
       </div>
     );
@@ -325,6 +415,14 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
               <input type="checkbox" checked={f.gift} onChange={(e) => set("gift", e.target.checked)} className="size-5 accent-[#00115b]" />
               This is a gift, deliver to someone else
             </label>
+            <fieldset className="space-y-1 rounded-[12px] bg-card p-3 text-sm">
+              <legend className="sr-only">Messages</legend>
+              <p className="text-text2">We email every update about this order. You can also get them by:</p>
+              <label className="flex min-h-10 cursor-pointer items-center gap-3"><input type="checkbox" checked={f.updatesWhatsapp} onChange={(e) => set("updatesWhatsapp", e.target.checked)} className="size-5 accent-[#00115b]" /> WhatsApp</label>
+              <label className="flex min-h-10 cursor-pointer items-center gap-3"><input type="checkbox" checked={f.updatesSms} onChange={(e) => set("updatesSms", e.target.checked)} className="size-5 accent-[#00115b]" /> SMS</label>
+              <label className="flex min-h-10 cursor-pointer items-center gap-3"><input type="checkbox" checked={f.marketing} onChange={(e) => set("marketing", e.target.checked)} className="size-5 accent-[#00115b]" /> Email me drops and offers (unsubscribe any time)</label>
+              {live && <label className="flex min-h-10 cursor-pointer items-center gap-3"><input type="checkbox" checked={f.remind} onChange={(e) => set("remind", e.target.checked)} className="size-5 accent-[#00115b]" /> Remind me about my bag if I do not finish</label>}
+            </fieldset>
             {f.gift && (
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field id="f-receiverName" label="Receiver's name" error={show("receiverName")}>
@@ -345,6 +443,11 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
 
             {f.method === "home" ? (
               <>
+                {saved.length > 0 && (
+                  <div className="flex flex-wrap gap-2" aria-label="Saved addresses">
+                    {saved.map((a) => <button key={a.id} type="button" onClick={() => applyAddress(a)} className="chip min-h-10 border border-line bg-white px-4 text-sm hover:border-navy">{a.label}: {a.area || a.city}</button>)}
+                  </div>
+                )}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field id="f-region" label="Region">
                     <select id="f-region" value={region} onChange={(e) => setRegion(e.target.value)} className="field" autoComplete="address-level1">
@@ -364,13 +467,22 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
                   </Field>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field id="f-gps" label="Ghana Post GPS (optional)" hint="For example GA-123-4567">
-                    <input id="f-gps" value={f.gps} onChange={(e) => set("gps", e.target.value.toUpperCase())} className="field" placeholder="GA-000-0000" />
+                  <Field id="f-landmark" label="Landmark (optional)" hint="A school, church or shop near you">
+                    <input id="f-landmark" value={f.landmark} onChange={(e) => set("landmark", e.target.value)} className="field" />
+                  </Field>
+                  <Field id="f-gps" label="Ghana Post GPS (optional)" hint="For example GA-123-4567" error={show("gps")}>
+                    <input {...inv("gps")} value={f.gps} onChange={(e) => set("gps", e.target.value.toUpperCase())} className="field" placeholder="GA-000-0000" />
                   </Field>
                   <Field id="f-note" label="Note for the rider (optional)">
                     <input id="f-note" value={f.note} onChange={(e) => set("note", e.target.value)} className="field" />
                   </Field>
+                  <div className="text-sm">
+                    <span className="mb-1 block font-medium">Location pin (optional)</span>
+                    <button type="button" onClick={locate} className="btn-outline w-full"><Icon name="pin" size={18} /> {f.lat ? "Pin added ✓" : "Use my current location"}</button>
+                    {locMsg && <p className="mt-1 text-xs text-text2" role="status">{locMsg}</p>}
+                  </div>
                 </div>
+                {zoneOf(region)?.onArrival && <p className="rounded-[12px] bg-[#fbeedb] p-3 text-sm text-warning">For {region}, the delivery fee is paid to the courier when your parcel arrives. It is not included below.</p>}
               </>
             ) : (
               <p className="flex items-start gap-3 rounded-[12px] bg-card p-3 text-sm text-text2">
@@ -419,6 +531,7 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
                     <input {...inv("momo")} value={f.momo} onChange={(e) => set("momo", e.target.value)} className="field" type="tel" inputMode="tel" />
                   </Field>
                 )}
+                <label className="flex min-h-10 cursor-pointer items-center gap-3 text-sm"><input type="checkbox" checked={f.saveMomo} onChange={(e) => set("saveMomo", e.target.checked)} className="size-5 accent-[#00115b]" /> Save this MoMo number for next time</label>
                 <p className="rounded-[12px] bg-card p-3 text-sm text-text2">A prompt will pop up on this phone. Approve it with your PIN to finish.</p>
               </>
             ) : f.pay === "manual_momo" ? (
@@ -460,7 +573,7 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
             <ul className="mt-3 space-y-3">
               {priced.map((l) => (
                 <li key={l.key} className="flex gap-3 text-sm">
-                  <span className="size-14 shrink-0 overflow-hidden rounded-[12px]"><ProductArt {...l.product.art} label="" /></span>
+                  <span className="size-14 shrink-0 overflow-hidden rounded-[12px]"><ProductPhoto product={l.product} /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{l.product.name}</span>
                     <span className="block text-xs text-text2">{[l.style, l.colour, l.size !== "One size" ? `Size ${l.size}` : null].filter(Boolean).join(" · ")} · Qty {l.qty}</span>
@@ -471,13 +584,24 @@ export function CheckoutForm({ live }: { live?: PaymentOptions | null }) {
             </ul>
             <div className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
               <p className="flex justify-between"><span>Subtotal</span><span>{formatGHS(totals.subtotal)}</span></p>
-              <p className="flex justify-between text-text2"><span>Delivery</span><span>{totals.fee === 0 ? "Free" : formatGHS(totals.fee)}</span></p>
+              <p className="flex justify-between text-text2"><span>Delivery</span><span>{zoneOf(activeRegion)?.onArrival && f.method === "home" ? "Paid on arrival" : totals.fee === 0 ? "Free" : formatGHS(totals.fee)}</span></p>
+              {off > 0 && <p className="flex justify-between text-success"><span>Discount ({discount?.code})</span><span>−{formatGHS(off)}</span></p>}
               <p className="flex justify-between border-t border-line pt-3 text-base font-bold"><span>Total</span><span>{formatGHS(totals.total)}</span></p>
               <p className="flex justify-between rounded-[12px] bg-navy px-3 py-2 font-semibold text-white"><span>Pay now</span><span className="text-lime">{formatGHS(totals.dueNow)}</span></p>
               {totals.dueLater > 0 && <p className="flex justify-between text-warning"><span>Balance on delivery</span><b>{formatGHS(totals.dueLater)}</b></p>}
             </div>
           </div>
 
+          {live && (
+            <div className="card p-4">
+              <label htmlFor="f-coupon" className="text-sm font-medium">Promo code</label>
+              <div className="mt-1 flex gap-2">
+                <input id="f-coupon" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} className="field" autoComplete="off" />
+                <button type="button" onClick={() => void applyCoupon()} className="btn-outline">Apply</button>
+              </div>
+              {couponMsg && <p className={`mt-1 text-sm ${discount ? "text-success" : "text-error"}`} role="status">{couponMsg}</p>}
+            </div>
+          )}
           <label className="flex cursor-pointer items-start gap-3 text-sm">
             <input id="terms" type="checkbox" checked={f.terms} onChange={(e) => set("terms", e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-[#00115b]" aria-invalid={!!show("terms")} />
             <span>I agree to the <Link href="/help/terms" className="underline">Terms</Link></span>

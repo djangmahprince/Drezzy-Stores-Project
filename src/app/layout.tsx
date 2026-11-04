@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
   appleWebApp: { capable: true, title: "Drezzy", statusBarStyle: "black-translucent" },
   description:
-    "Your Outfits Solution. You order, we deliver, you drip. Sneakers, outfits and watches delivered nationwide in Ghana.",
+    "Your Outfits Solution. You order, we deliver, you drip. Sneakers, shoes, shirts, loafers and watches delivered nationwide in Ghana.",
 };
 
 export const viewport: Viewport = {

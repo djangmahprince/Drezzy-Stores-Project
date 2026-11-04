@@ -46,4 +46,8 @@ export type DashOrder = {
   courier?: string;
   log: { at: string; text: string }[];
   notes: string[];
+  region?: string;
+  source?: string;
+  createdAt?: string;
+  rider?: string;
 };

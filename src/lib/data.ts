@@ -38,7 +38,7 @@ export const branches = {
  * `days` is the delivery time for the region; the supplier lead time of the items is added on top.
  * The Accra zone is the only one that can pay half now, half on delivery.
  */
-export type Zone = { region: string; fee: number; days: number; accra?: boolean };
+export type Zone = { region: string; fee: number; days: number; accra?: boolean; /** the fee is paid to the courier on arrival, not at checkout */ onArrival?: boolean };
 
 export const zones: Zone[] = [
   { region: "Greater Accra", fee: 30, days: 1, accra: true },

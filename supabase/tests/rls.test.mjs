@@ -189,7 +189,7 @@ const varPub = (await db.query("insert into public.variants(product_id, style, c
 await db.query("insert into public.variants(product_id, colour, size, sku, price) values ($1,'Black','42','SEC-BK-42',999)", [prodDraft]);
 await db.query("insert into public.supplier_offers(variant_id, supplier_id, cost) values ($1,$2,300)", [varPub, sup]);
 
-ok("categories seeded two levels deep", (await db.query("select count(*)::int n from public.categories where parent_id is not null")).rows[0].n === 12);
+ok("categories seeded two levels deep", (await db.query("select count(*)::int n from public.categories where parent_id is not null")).rows[0].n === 2);
 
 // shoppers
 await db.exec("set role anon");
@@ -200,7 +200,7 @@ ok("anon cannot select * from variants", !(await tryQ("select * from public.vari
 ok("anon cannot read suppliers", !(await tryQ("select * from public.suppliers")).ok);
 ok("anon cannot read supplier costs", !(await tryQ("select * from public.supplier_offers")).ok);
 ok("anon cannot change prices", !(await tryQ("update public.variants set price=1")).ok);
-ok("anon can read categories", (await tryQ("select * from public.categories")).rows.length === 18);
+ok("anon can read categories", (await tryQ("select * from public.categories")).rows.length === 7);
 await db.exec("reset role");
 
 // sales: sees everything in the catalogue, changes nothing, never sees costs

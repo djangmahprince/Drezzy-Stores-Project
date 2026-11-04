@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { Icon } from "@/components/Icon";
-import { ProductArt } from "@/components/ProductArt";
+import { ProductPhoto } from "@/components/ProductPhoto";
 import { closeDrawer, computeTotals, removeLine, setQty, usePricedCart, useDrawerOpen } from "@/lib/cart";
 import { useCatalogue } from "@/components/CatalogueProvider";
 import { formatGHS } from "@/lib/data";
@@ -77,7 +77,7 @@ export function CartDrawer() {
               {priced.map((l) => (
                 <li key={l.key} className="card flex gap-3 p-3">
                   <Link href={`/product/${l.slug}`} onClick={closeDrawer} className="size-20 shrink-0 overflow-hidden rounded-[12px]">
-                    <ProductArt {...l.product.art} label={l.product.name} />
+                    <ProductPhoto product={l.product} label={l.product.name} />
                   </Link>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium leading-snug">{l.product.name}</p>

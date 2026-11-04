@@ -1,5 +1,10 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { AnalyticsLive } from "@/components/dashboard/AnalyticsLive";
+import { Customers, Delivery, Feedback, Funnel, Overview, Products, Sources, Team } from "@/components/dashboard/AnalyticsReports";
+import { CampaignLinks } from "@/components/dashboard/CampaignLinks";
+import { requireStaff } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { Kpi, PageHead, Progress, Table } from "@/components/dashboard/DashShell";
 import { Guard } from "@/components/dashboard/Guard";
 import { getAnalytics, ranges } from "@/lib/analytics/staff";
@@ -35,15 +40,33 @@ function Sample() {
   );
 }
 
-async function Live({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
-  const { days } = await searchParams;
+const tabs: [string, string][] = [["overview", "Overview"], ["funnel", "Funnel"], ["sources", "Sources"], ["delivery", "Delivery"], ["products", "Products"], ["customers", "Customers"], ["team", "Team"], ["links", "Campaign links"], ["feedback", "Feedback"]];
+type Params = { days?: string; tab?: string; split?: string };
+
+async function Live({ searchParams }: { searchParams: Promise<Params> }) {
+  const [{ days, tab = "overview", split = "" }, me] = await Promise.all([searchParams, requireStaff()]);
   const n = (ranges as readonly number[]).includes(Number(days)) ? Number(days) : 30;
-  const a = await getAnalytics(n);
-  if (!a) return <p className="card p-6 text-sm text-text2">Analytics could not be loaded. Please try again.</p>;
-  return <AnalyticsLive a={a} />;
+  const a = tab === "overview" ? await getAnalytics(n) : null;
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <nav className="flex gap-1 overflow-x-auto" aria-label="Reports">{tabs.map(([k, l]) => <Link key={k} href={`?tab=${k}&days=${n}`} aria-current={tab === k ? "page" : undefined} className={`chip min-h-9 shrink-0 px-3 ${tab === k ? "bg-navy text-white" : "bg-white text-navy"}`}>{l}</Link>)}</nav>
+        <nav className="flex gap-1" aria-label="Period">{ranges.map((r) => <Link key={r} href={`?tab=${tab}&days=${r}`} className={`chip min-h-9 px-3 ${n === r ? "bg-navy text-white" : "bg-white text-navy"}`}>{r} days</Link>)}</nav>
+      </div>
+      {tab === "overview" && <><Overview days={n} />{a && <div className="mt-6"><AnalyticsLive a={a} /></div>}</>}
+      {tab === "funnel" && <Funnel days={n} split={split} />}
+      {tab === "sources" && <Sources days={n} />}
+      {tab === "delivery" && <Delivery days={n} />}
+      {tab === "products" && <Products days={n} />}
+      {tab === "customers" && <Customers days={n} />}
+      {tab === "team" && <Team days={n} />}
+      {tab === "links" && <CampaignLinks canEdit={can(me.permissions, "analytics", "edit") || can(me.permissions, "content", "edit")} />}
+      {tab === "feedback" && <Feedback />}
+    </>
+  );
 }
 
-export default function Analytics({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+export default function Analytics({ searchParams }: { searchParams: Promise<Params> }) {
   return (
     <Guard module="analytics">
       {isSupabaseConfigured ? (

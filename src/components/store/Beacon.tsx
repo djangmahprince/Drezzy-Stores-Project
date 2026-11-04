@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { trackEvent } from "@/lib/track";
+import { trackEvent, type StepName } from "@/lib/track";
 
 /** Records one anonymous step in the shopper's journey (no personal details). Renders nothing. */
-export function Beacon({ name }: { name: "visit" | "product_view" | "add_to_cart" | "checkout_started" }) {
+export function Beacon({ name, params }: { name: StepName; params?: Record<string, string | number> }) {
+  const key = JSON.stringify(params ?? {});
   useEffect(() => {
-    trackEvent(name);
-  }, [name]);
+    trackEvent(name, JSON.parse(key));
+  }, [name, key]);
   return null;
 }

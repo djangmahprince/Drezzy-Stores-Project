@@ -20,8 +20,8 @@ for (const d of sampleDefs) {
   const catSlug = slugify(d.subcategory ? `${d.category} ${d.subcategory}` : d.category);
   out.push(`-- ${d.name}`);
   out.push(
-    `insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art)\n` +
-      `select ${q(d.slug)}, ${q(d.sku)}, ${q(d.name)}, ${q(d.brand)}, c.id, ${q(audienceToDb(d.audience))}::public.audience, ${q(d.description)}, ${arr(d.details)}, ${!!d.isNew}, ${d.popular}, true, ${q(JSON.stringify(d.art))}::jsonb\n` +
+    `insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art, images, tags)\n` +
+      `select ${q(d.slug)}, ${q(d.sku)}, ${q(d.name)}, ${q(d.brand)}, c.id, ${q(audienceToDb(d.audience))}::public.audience, ${q(d.description)}, ${arr(d.details)}, ${!!d.isNew}, ${d.popular}, true, ${q(JSON.stringify(d.art))}::jsonb, ${arr(d.images ?? [])}, ${arr(d.tags ?? [])}\n` +
       `from public.categories c where c.slug = ${q(catSlug)}\n` +
       `on conflict (slug) do nothing;`,
   );

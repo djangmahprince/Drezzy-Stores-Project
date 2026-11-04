@@ -11,7 +11,7 @@ export async function getZones(): Promise<Zone[]> {
   cacheTag(ZONES_TAG);
   cacheLife("minutes");
   if (!isSupabaseConfigured) return defaultZones;
-  const { data, error } = await createPublicClient().from("delivery_zones").select("region, fee, est_days, half_payment_allowed").eq("active", true).order("sort");
+  const { data, error } = await createPublicClient().from("delivery_zones").select("region, fee, est_days, half_payment_allowed, fee_on_arrival").eq("active", true).order("sort");
   if (error) throw new Error(`Could not load delivery zones: ${error.message}`);
-  return (data ?? []).map((z) => ({ region: z.region as string, fee: Number(z.fee), days: z.est_days as number, accra: z.half_payment_allowed as boolean }));
+  return (data ?? []).map((z) => ({ region: z.region as string, fee: Number(z.fee), days: z.est_days as number, accra: z.half_payment_allowed as boolean, ...(z.fee_on_arrival ? { onArrival: true } : {}) }));
 }

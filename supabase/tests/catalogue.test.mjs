@@ -43,14 +43,14 @@ eq("availability summary: none open", availabilitySummary(buildProduct(base, [v(
 ok("a product with no variants does not crash", buildProduct(base, []).price === 0);
 
 // ---------- the sample catalogue ----------
-ok("sample catalogue has 10 products", sampleProducts.length === 10);
-const dunk = sampleProducts.find((p) => p.slug === "nike-dunk");
-ok("Nike Dunk is 3 styles x 3 colours x 7 sizes = 63 variants", dunk.variants.length === 63, String(dunk.variants.length));
+ok("the catalogue has the 5 real products", sampleProducts.length === 5);
+ok("every real product has a photo", sampleProducts.every((p) => p.images?.length));
+const dunk = sampleProducts.find((p) => p.slug === "nike-sb-dunk-low");
+ok("the Dunk has one colour in 7 sizes", dunk.variants.length === 7, String(dunk.variants.length));
 const allSkus = sampleProducts.flatMap((p) => p.variants.map((x) => x.sku));
 ok("every sample variant SKU is unique", new Set(allSkus).size === allSkus.length);
 ok("sample slugs are unique", new Set(sampleProducts.map((p) => p.slug)).size === sampleProducts.length);
-ok("the striped quarter-zip carries its sale price", sampleProducts.find((p) => p.slug === "striped-quarter-zip").compareAt === 260);
-ok("a sold-out size stays listed as Unavailable", sampleProducts.find((p) => p.slug === "air-jordan-1-retro-high-og-triple-black").sizes.find((s) => s.size === "45").availability === "Unavailable");
+ok("an unavailable size stays listed as Unavailable", dunk.sizes.find((s) => s.size === "45").availability === "Unavailable");
 ok("sample definitions match the built products", sampleDefs.length === sampleProducts.length);
 
 // ---------- mapping database rows ----------

@@ -10,6 +10,7 @@ import type { NextStep, PayChoice, PlaceInput, PlaceResult, RetryResult } from "
 import { clientKey, limited } from "@/lib/rate-limit";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createPublicClient } from "@/lib/supabase/public";
+import { createClient } from "@/lib/supabase/server";
 
 /** The database raises plain-English messages for problems a customer can fix. Anything else is hidden behind a generic line. */
 const customerMessage = (e: { code?: string; message: string }) =>
@@ -58,7 +59,8 @@ export async function placeOrderAction(input: PlaceInput): Promise<PlaceResult> 
   }
   if (limited("place", await clientKey(), 12, 60 * 60_000)) return { ok: false, error: "Too many orders from this connection. Please wait a little, or WhatsApp us." };
 
-  const { data, error } = await createPublicClient().rpc("place_order", { p: placePayload(input) });
+  // the shopper's own session: a signed-in shopper's order goes straight into My Drezzy
+  const { data, error } = await (await createClient()).rpc("place_order", { p: placePayload(input) });
   if (error || !data) return { ok: false, error: customerMessage(error ?? { message: "" }) };
   const r = data as { number: string; total: number; due_now: number; balance_due: number; payment_reference: string };
 

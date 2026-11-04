@@ -28,7 +28,7 @@ export function ZoneEditor({ initial, canEdit }: { initial: Row[]; canEdit: bool
       {msg && <p role="status" className={`rounded-[12px] p-3 text-sm ${msg.bad ? "bg-[#fdecec] text-error" : "bg-[#e3f5ee] text-success"}`}>{msg.text}</p>}
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="text-xs text-text2"><tr><th className="p-3">Region</th><th className="p-3">Fee (GHS)</th><th className="p-3">Days</th><th className="p-3">Half payment</th><th className="p-3">On sale</th><th className="p-3" /></tr></thead>
+          <thead className="text-xs text-text2"><tr><th className="p-3">Region</th><th className="p-3">Fee (GHS)</th><th className="p-3">Days</th><th className="p-3">Half payment</th><th className="p-3" title="For courier routes with variable prices: the fee is paid to the courier, not at checkout">Fee on arrival</th><th className="p-3">On sale</th><th className="p-3" /></tr></thead>
           <tbody className="divide-y divide-line">
             {rows.map((z, i) => (
               <tr key={z.region} className={z.active ? "" : "opacity-60"}>
@@ -36,6 +36,7 @@ export function ZoneEditor({ initial, canEdit }: { initial: Row[]; canEdit: bool
                 <td className="p-3"><input aria-label={`${z.region} fee`} type="number" min={0} step="1" disabled={!canEdit} className="field !min-h-10 w-24" value={Number.isNaN(z.fee) ? "" : z.fee} onChange={(e) => change(i, { fee: e.target.value === "" ? NaN : Number(e.target.value) })} /></td>
                 <td className="p-3"><input aria-label={`${z.region} days`} type="number" min={0} max={30} disabled={!canEdit} className="field !min-h-10 w-20" value={Number.isNaN(z.days) ? "" : z.days} onChange={(e) => change(i, { days: e.target.value === "" ? NaN : Number(e.target.value) })} /></td>
                 <td className="p-3"><input aria-label={`${z.region} half payment`} type="checkbox" disabled={!canEdit} className="size-5 accent-[#00115b]" checked={z.half} onChange={(e) => change(i, { half: e.target.checked })} /></td>
+                <td className="p-3"><input aria-label={`${z.region} fee paid to courier on arrival`} type="checkbox" disabled={!canEdit} className="size-5 accent-[#00115b]" checked={!!z.onArrival} onChange={(e) => change(i, { onArrival: e.target.checked })} /></td>
                 <td className="p-3"><input aria-label={`${z.region} on sale`} type="checkbox" disabled={!canEdit} className="size-5 accent-[#00115b]" checked={z.active} onChange={(e) => change(i, { active: e.target.checked })} /></td>
                 <td className="p-3 text-right">{canEdit && <button type="button" disabled={pending || !dirty(i)} className="btn-primary !min-h-9 text-xs disabled:opacity-40" onClick={() => save(i)}>Save</button>}</td>
               </tr>

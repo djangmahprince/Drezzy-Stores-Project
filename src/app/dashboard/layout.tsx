@@ -2,20 +2,21 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DashSidebar, DashTopbar } from "@/components/dashboard/DashShell";
 import { requireStaff } from "@/lib/auth";
+import { currentBranch } from "@/lib/branch";
 import { navFor } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: { default: "Staff dashboard", template: "%s | Drezzy Staff" } };
 
 // Reading the session happens at request time, so it sits behind Suspense and streams in (Cache Components).
 async function Frame({ children }: { children: React.ReactNode }) {
-  const staff = await requireStaff();
+  const [staff, branch] = await Promise.all([requireStaff(), currentBranch()]);
   const items = navFor(staff.permissions).map(({ href, label }) => ({ href, label }));
   const who = { name: staff.fullName, role: staff.roleName };
   return (
     <div className="flex min-h-screen bg-page">
       <DashSidebar items={items} who={who} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <DashTopbar items={items} who={who} />
+        <DashTopbar items={items} who={who} branch={branch} />
         <main className="flex-1 p-4 md:p-6">
           {/* page content streams in here, so moving between dashboard pages keeps the sidebar and top bar in place */}
           <Suspense fallback={<div className="space-y-4" aria-busy="true"><div className="h-9 w-56 animate-pulse rounded-[12px] bg-white" /><div className="h-64 animate-pulse rounded-[12px] bg-white" /></div>}>

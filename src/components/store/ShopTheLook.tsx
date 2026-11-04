@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useCatalogue } from "@/components/CatalogueProvider";
 import { Icon } from "@/components/Icon";
-import { ProductArt } from "@/components/ProductArt";
+import { ProductPhoto } from "@/components/ProductPhoto";
 import { variantsFor } from "@/lib/catalogue/build";
 import { addToCart } from "@/lib/cart";
 import { formatGHS } from "@/lib/data";
@@ -51,7 +51,7 @@ export function ShopTheLook({ items }: { items: LookItem[] }) {
         {rows.map((r, i) => (
           <li key={r.slug} className="flex items-center gap-3">
             <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">{i + 1}</span>
-            <span className="size-16 shrink-0 overflow-hidden rounded-[12px]"><ProductArt {...r.product.art} label="" /></span>
+            <span className="size-16 shrink-0 overflow-hidden rounded-[12px]"><ProductPhoto product={r.product} /></span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">{r.product.name}{r.style ? ` ${r.style}` : ""}</span>
               <span className="block text-sm text-text2">{formatGHS(r.price)}</span>

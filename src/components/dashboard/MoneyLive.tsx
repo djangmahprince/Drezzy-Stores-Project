@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { addExpenseAction, type ExpenseState } from "@/app/dashboard/money/actions";
+import { addExpenseAction, addMoneyInAction, type ExpenseState } from "@/app/dashboard/money/actions";
 import { Kpi, Pill, Progress, Table } from "@/components/dashboard/DashShell";
 import { formatGHS } from "@/lib/data";
 import type { MoneyData } from "@/lib/money/staff";
@@ -29,9 +29,33 @@ function ExpenseForm({ d }: { d: MoneyData }) {
           <label className="text-sm"><span className="mb-1 block font-medium">Branch</span>
             <select name="branch" className="field" defaultValue="both"><option value="both">Both</option><option value="accra">Accra</option><option value="kumasi">Kumasi</option></select></label>
           <label className="text-sm"><span className="mb-1 block font-medium">Note</span><input name="note" className="field" placeholder="What was it for?" /></label>
+          <label className="text-sm"><span className="mb-1 block font-medium">Receipt photo</span><input name="receipt" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="field py-2" /></label>
+          <label className="text-sm"><span className="mb-1 block font-medium">Ad campaign (optional)</span><input name="campaign" className="field" placeholder="detty-december" /></label>
           {state.error && <p role="alert" className="rounded-[12px] bg-[#fbe4e4] px-3 py-2 text-sm font-medium text-error sm:col-span-3">{state.error}</p>}
           {state.ok && <p role="status" className="rounded-[12px] bg-[#e3f5ee] px-3 py-2 text-sm font-medium text-success sm:col-span-3">Expense recorded. Refresh the page to see it in the list.</p>}
           <div className="sm:col-span-3"><button disabled={pending} className="btn-primary !min-h-10 disabled:opacity-60">{pending ? "Saving…" : "Save expense"}</button></div>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function MoneyInForm({ d }: { d: MoneyData }) {
+  const [state, action, pending] = useActionState<ExpenseState, FormData>(addMoneyInAction, {});
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mb-4">
+      <button type="button" className="btn-outline !min-h-10" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? "Close" : "Add other money in"}</button>
+      {open && (
+        <form action={action} className="card mt-3 grid gap-3 p-4 sm:grid-cols-3" noValidate>
+          <label className="text-sm"><span className="mb-1 block font-medium">Amount (GHS)</span><input name="amount" type="number" min={0} step="0.01" className="field" /></label>
+          <label className="text-sm"><span className="mb-1 block font-medium">Date</span><input name="date" type="date" className="field" defaultValue={`${d.month}-01`} /></label>
+          <label className="text-sm"><span className="mb-1 block font-medium">What is it?</span><input name="reason" className="field" placeholder="Owner top-up" /></label>
+          <label className="text-sm"><span className="mb-1 block font-medium">How</span><select name="method" className="field" defaultValue="momo"><option value="momo">MoMo</option><option value="cash">Cash</option><option value="bank">Bank</option><option value="card">Card</option></select></label>
+          <label className="text-sm"><span className="mb-1 block font-medium">Branch</span><select name="branch" className="field" defaultValue="both"><option value="both">Both</option><option value="accra">Accra</option><option value="kumasi">Kumasi</option></select></label>
+          {state.error && <p role="alert" className="rounded-[12px] bg-[#fbe4e4] px-3 py-2 text-sm font-medium text-error sm:col-span-3">{state.error}</p>}
+          {state.ok && <p role="status" className="rounded-[12px] bg-[#e3f5ee] px-3 py-2 text-sm font-medium text-success sm:col-span-3">Recorded. Refresh to see it.</p>}
+          <div className="sm:col-span-3"><button disabled={pending} className="btn-primary !min-h-10">{pending ? "Saving…" : "Save"}</button></div>
         </form>
       )}
     </div>
@@ -47,7 +71,13 @@ export function MoneyLive({ d }: { d: MoneyData }) {
         <Link href={`/dashboard/money?month=${d.prev}`} className="btn-outline !min-h-10" aria-label="Previous month">‹</Link>
         <span className="min-w-36 text-center font-semibold">{d.label}</span>
         <Link href={`/dashboard/money?month=${d.next}`} className="btn-outline !min-h-10" aria-label="Next month">›</Link>
-        {d.canSeeSalaries && <Link href={`/dashboard/money/salaries?month=${d.month}`} className="btn-outline !min-h-10 ml-auto">Salaries</Link>}
+        {d.closed && <Pill tone="info">Month closed</Pill>}
+        <div className="ml-auto flex flex-wrap gap-2">
+          {d.canManage && <Link href="/dashboard/money/riders" className="btn-outline !min-h-10">Rider cash</Link>}
+          {d.canManage && <Link href={`/dashboard/money/budgets?month=${d.month}`} className="btn-outline !min-h-10">Budgets and month close</Link>}
+          {d.canSeeSalaries && <Link href="/dashboard/money/profit" className="btn-outline !min-h-10">Profit</Link>}
+          {d.canSeeSalaries && <Link href={`/dashboard/money/salaries?month=${d.month}`} className="btn-outline !min-h-10">Salaries</Link>}
+        </div>
       </div>
 
       {s ? (
@@ -63,7 +93,7 @@ export function MoneyLive({ d }: { d: MoneyData }) {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <section className="lg:col-span-2">
-          <ExpenseForm d={d} />
+          <div className="flex flex-wrap gap-2"><ExpenseForm d={d} />{d.canManage && d.canAdd && <MoneyInForm d={d} />}</div>
           <h2 className="mb-2 font-semibold">Money in and out</h2>
           {d.ledger.length === 0 ? <p className="card p-8 text-center text-sm text-text2">Nothing recorded this month.</p> : (
             <Table head={["When", "What", "Category", "Branch", "Method", "Amount (GHS)"]} rows={d.ledger.map((r) => [
@@ -80,7 +110,7 @@ export function MoneyLive({ d }: { d: MoneyData }) {
                 {s.byCategory.map((c) => <li key={c.category}><p className="flex justify-between"><span>{c.category}</span><b>{formatGHS(c.amount)}</b></p><Progress pct={(c.amount / top) * 100} /></li>)}
               </ul>
             )}
-            <p className="mt-4 rounded-[12px] bg-card p-3 text-xs text-text2">Salary records are for the Owner and Finance only and arrive in a later release. Refunds are recorded with the refund workflow.</p>
+            <p className="mt-4 rounded-[12px] bg-card p-3 text-xs text-text2">Salaries appear for the Owner and Finance only. Refunds are recorded with the refund workflow.</p>
           </section>
         )}
       </div>

@@ -17,6 +17,8 @@ export type Variant = {
   compareAt?: number;
   availability: Availability;
   leadDays: number;
+  /** When the sale price on this size ends (the normal price is then in compareAt). */
+  saleEndsAt?: string;
 };
 
 export type Product = {
@@ -45,6 +47,18 @@ export type Product = {
   details: string[];
   condition: string;
   art: Art;
+  /** Real photography (4:5), once uploaded. Without it the stand-in artwork is shown. */
+  images?: string[];
+  video?: string;
+  material?: string;
+  careNotes?: string;
+  deliveryNotes?: string;
+  /** A limited drop: hidden from purchase until this time, with a cap per customer. */
+  releaseAt?: string;
+  cap?: number;
+  tags?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
 };
 
 /** What a product looks like before its derived fields are worked out. */

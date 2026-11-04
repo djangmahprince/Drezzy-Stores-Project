@@ -6,12 +6,12 @@ import { PGlite } from "@electric-sql/pglite";
 
 const dir = (p) => fileURLToPath(new URL(p, import.meta.url));
 
-export async function createHarness({ seed = false } = {}) {
+export async function createHarness({ seed = false, fixtures = true } = {}) {
   const db = new PGlite();
   await db.exec(`
     create role anon nologin; create role authenticated nologin; create role service_role nologin;
     create schema auth;
-    create table auth.users (id uuid primary key default gen_random_uuid(), email text, email_confirmed_at timestamptz default now());
+    create table auth.users (id uuid primary key default gen_random_uuid(), email text, email_confirmed_at timestamptz default now(), raw_user_meta_data jsonb default '{}'::jsonb, created_at timestamptz default now());
     create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
     create function auth.uid() returns uuid language sql stable as $$ select nullif(auth.jwt() ->> 'sub', '')::uuid $$;
     grant usage on schema auth, public to anon, authenticated, service_role;
@@ -20,6 +20,8 @@ export async function createHarness({ seed = false } = {}) {
   `);
   for (const f of fs.readdirSync(dir("../migrations")).sort()) await db.exec(fs.readFileSync(dir(`../migrations/${f}`), "utf8"));
   if (seed) await db.exec(fs.readFileSync(dir("../seed.sql"), "utf8"));
+  // the rules tests use a fixed set of products, so changing the real catalogue never breaks them
+  if (seed && fixtures) await db.exec(fs.readFileSync(dir("./fixtures.sql"), "utf8"));
 
   let pass = 0, fail = 0;
   const ok = (name, cond, extra = "") => {

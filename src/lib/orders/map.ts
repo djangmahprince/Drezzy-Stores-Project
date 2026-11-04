@@ -6,6 +6,7 @@ export type OrderRow = {
   total: number | string; balance_due: number | string; amount_paid: number | string;
   delivery_method: string; region: string | null; city: string | null; area: string | null;
   agent_name: string | null; courier: string | null; created_at: string; updated_at: string;
+  source?: string | null; rider_name?: string | null;
   customer: { full_name: string; phone: string } | { full_name: string; phone: string }[] | null;
   items: { product_name: string; variant_label: string; qty: number }[] | null;
 };
@@ -74,5 +75,9 @@ export function orderFromRow(r: OrderRow, now: number): DashOrder {
     courier: r.courier ?? undefined,
     log: [],
     notes: [],
+    ...(r.region ? { region: r.region } : {}),
+    ...(r.source ? { source: r.source } : {}),
+    createdAt: r.created_at,
+    ...(r.rider_name ? { rider: r.rider_name } : {}),
   };
 }

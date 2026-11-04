@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { Guard } from "@/components/dashboard/Guard";
 import { OrderDetailLive } from "@/components/dashboard/OrderDetailLive";
 import { OrderDetailView } from "@/components/dashboard/OrderDetailView";
+import { OrderExtras } from "@/components/dashboard/OrderExtras";
+import { getOrderExtras } from "@/lib/orders/extras";
 import { getOrderDetail } from "@/lib/orders/staff";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -13,7 +15,7 @@ export function generateStaticParams() {
 async function Detail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!isSupabaseConfigured) return <OrderDetailView id={id} />;
-  const d = await getOrderDetail(id);
+  const [d, extras] = await Promise.all([getOrderDetail(decodeURIComponent(id)), getOrderExtras(decodeURIComponent(id))]);
   if (!d) {
     return (
       <div className="card mx-auto max-w-md p-10 text-center">
@@ -23,7 +25,12 @@ async function Detail({ params }: { params: Promise<{ id: string }> }) {
       </div>
     );
   }
-  return <OrderDetailLive d={d} />;
+  return (
+    <>
+      <OrderDetailLive d={d} />
+      {extras && <OrderExtras d={extras} />}
+    </>
+  );
 }
 
 export default function OrderDetail({ params }: { params: Promise<{ id: string }> }) {

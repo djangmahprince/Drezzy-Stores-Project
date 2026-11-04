@@ -21,9 +21,13 @@ export type TrackJson = {
   rider_name: string | null;
   rider_phone: string | null;
   branch: "accra" | "kumasi" | "both";
-  items: { name: string; detail: string; qty: number }[];
+  items: { name: string; detail: string; qty: number; slug?: string | null; reviewed?: boolean }[];
   events: { kind: string; status: string | null; at: string; note: string | null; by: string }[];
   payments: { kind: string; method: string | null; amount: number; at: string | null }[];
+  delivery_code?: string | null;
+  sourcing_outcome?: string | null;
+  alternative_note?: string | null;
+  feedback?: number | null;
 };
 
 export type StepState = "done" | "current" | "todo";
@@ -42,6 +46,12 @@ export type TrackView = {
   deliveringTo: string;
   balanceDue: number;
   helpBranch: "accra" | "kumasi";
+  /** The 4-digit code the customer gives the rider, shown once the order is on its way. */
+  deliveryCode?: string;
+  delivered: boolean;
+  feedback: number | null;
+  /** Products on a delivered order that can still be reviewed. */
+  toReview: { name: string; slug: string }[];
 };
 
 export const STEP_LABELS = [
@@ -129,7 +139,10 @@ export function buildTrack(t: TrackJson): TrackView {
   }));
 
   let banner: TrackBanner | undefined;
-  if (cancelled) banner = { tone: "bad", text: "This order was cancelled. If you paid, we will contact you about your refund." };
+  if (t.sourcing_outcome === "alternative_offered") banner = { tone: "warn", text: `We could not get your item from our suppliers. We are offering an alternative${t.alternative_note ? `: ${t.alternative_note}` : ""}. Reply on WhatsApp to accept, or ask for a full refund.` };
+  else if (t.sourcing_outcome === "refund" && !cancelled) banner = { tone: "bad", text: "We could not get your item from our suppliers. A full refund of what you paid is on its way." };
+  else if (t.payment_state === "refunded") banner = { tone: "info", text: "This order was refunded." };
+  else if (cancelled) banner = { tone: "bad", text: "This order was cancelled. If you paid, we will contact you about your refund." };
   else if (t.status === "failed_delivery") banner = { tone: "bad", text: "We could not deliver this time. We will contact you to reschedule." };
   else if (t.payment_state === "pending_check") banner = { tone: "info", text: "We are checking your MoMo payment. We will update this page as soon as it is confirmed." };
   else if (t.balance_due > 0 && paid) banner = { tone: "warn", text: `Balance to pay on delivery: ${ghs(t.balance_due)}. Pay the rider by MoMo or cash.` };
@@ -151,5 +164,9 @@ export function buildTrack(t: TrackJson): TrackView {
     deliveringTo: t.delivery_method === "pickup" ? "Pick up at the Accra branch" : [t.receiver_name, where, t.region].filter(Boolean).join(" · "),
     balanceDue: Number(t.balance_due),
     helpBranch: t.branch === "kumasi" ? "kumasi" : "accra",
+    ...(t.delivery_code ? { deliveryCode: t.delivery_code } : {}),
+    delivered,
+    feedback: t.feedback ?? null,
+    toReview: delivered ? t.items.filter((i): i is typeof i & { slug: string } => !!i.slug && !i.reviewed).map((i) => ({ name: i.name, slug: i.slug })) : [],
   };
 }

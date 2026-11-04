@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { useCatalogue } from "@/components/CatalogueProvider";
-import { ProductArt } from "@/components/ProductArt";
+import { ProductPhoto } from "@/components/ProductPhoto";
 import { formatGHS } from "@/lib/data";
 import { searchProducts, suggestions } from "@/lib/search";
+import { track } from "@/lib/track";
 
 export function SearchOverlay({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState("");
@@ -15,6 +16,14 @@ export function SearchOverlay({ onClose }: { onClose: () => void }) {
   const input = useRef<HTMLInputElement>(null);
   const { products } = useCatalogue();
   const results = searchProducts(products, q);
+
+  // what people search for, and searches that found nothing, feed the product report (FR-AN-005, FR-AN-009)
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) return;
+    const t = window.setTimeout(() => track("search", { term: term.slice(0, 60), results: searchProducts(products, term).length }), 1200);
+    return () => window.clearTimeout(t);
+  }, [q, products]);
 
   useEffect(() => {
     input.current?.focus();
@@ -83,7 +92,7 @@ export function SearchOverlay({ onClose }: { onClose: () => void }) {
               {results.map((p) => (
                 <li key={p.slug}>
                   <Link href={`/product/${p.slug}`} onClick={onClose} className="card flex items-center gap-3 p-2 hover:border-navy">
-                    <span className="size-16 shrink-0 overflow-hidden rounded-[12px]"><ProductArt {...p.art} label="" /></span>
+                    <span className="size-16 shrink-0 overflow-hidden rounded-[12px]"><ProductPhoto product={p} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-xs font-semibold uppercase text-text2">{p.brand}</span>
                       <span className="block truncate text-sm font-medium">{p.name}</span>

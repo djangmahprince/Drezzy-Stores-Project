@@ -5,12 +5,17 @@ export type PayChoice = "mtn" | "telecel" | "airtel" | "card" | "manual_momo";
 export type PlaceInput = {
   customer: { name: string; phone: string; email: string };
   receiver?: { name: string; phone: string } | null;
-  delivery: { method: "home" | "pickup"; region: string; city: string; area: string; street: string; gps: string; note: string };
+  delivery: { method: "home" | "pickup"; region: string; city: string; area: string; street: string; gps: string; note: string; landmark?: string; lat?: number; lng?: number };
   plan: "full" | "half";
   source: string;
   sourceDetail: string;
   items: { variantId: string; qty: number }[];
   payMethod: PayChoice;
+  coupon?: string;
+  /** What the shopper agreed to at checkout: order updates by WhatsApp or SMS, marketing, saving the MoMo number. */
+  consents?: { whatsapp?: boolean; sms?: boolean; marketing?: boolean; save_momo?: boolean; momo_number?: string };
+  /** Where the visit came from (UTM tags, referrer, Drip School article) for the source report. */
+  attribution?: { utm_source?: string; utm_medium?: string; utm_campaign?: string; referrer?: string; session?: string; article?: string; device?: string };
   /** The number to send the MoMo prompt to, when it is not the contact phone. */
   momoPhone?: string;
 };

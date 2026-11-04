@@ -2,3 +2,5 @@
 export const CATALOGUE_TAG = "catalogue";
 export const ZONES_TAG = "zones";
 export const ARTICLES_TAG = "articles";
+export const SITE_TAG = "site";
+export const REVIEWS_TAG = "reviews";

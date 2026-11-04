@@ -27,7 +27,7 @@ export const lineKey = (slug: string, size: string, colour: string, style?: stri
 
 export function addToCart(p: Product, pick: { size: string; colour: string; style?: string }, qty = 1) {
   const key = lineKey(p.slug, pick.size, pick.colour, pick.style);
-  trackEvent("add_to_cart");
+  trackEvent("add_to_cart", { product: p.slug, size: pick.size, value: findVariant(p, pick)?.price ?? p.price, quantity: qty });
   cart.set((s) => {
     const existing = s.lines.find((l) => l.key === key);
     const lines = existing
@@ -99,7 +99,7 @@ export type Totals = {
  */
 export function computeTotals(lines: PricedLine[], zone: Zone | undefined, method: Method, plan: Plan): Totals {
   const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0);
-  const fee = lines.length === 0 || method === "pickup" ? 0 : (zone?.fee ?? 0);
+  const fee = lines.length === 0 || method === "pickup" || zone?.onArrival ? 0 : (zone?.fee ?? 0);
   const total = subtotal + fee;
   const canSplit = method === "pickup" || !!zone?.accra; // pickup is at the Accra branch, so it follows the Accra rule
   const half = canSplit && plan === "half";

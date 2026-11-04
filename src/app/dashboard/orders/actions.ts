@@ -164,3 +164,75 @@ export async function createStaffOrderAction(input: StaffOrderInput): Promise<{ 
   const r = data as { order_id: string; number: string; total: number; due_now: number };
   return { ok: true, number: r.number, id: r.order_id, total: Number(r.total), dueNow: Number(r.due_now) };
 }
+
+// ---------------------------------------------------------------------------
+// More order actions (PRD FR-ORD-003, FR-CO-009, FR-CO-011, FR-ORD-011)
+// ---------------------------------------------------------------------------
+
+export async function reassignAction(orderId: string, agentId: string): Promise<ActionResult> {
+  return rpc("reassign_order", { p_order: orderId, p_agent: agentId });
+}
+
+export async function assignRiderAction(orderId: string, riderId: string | null, courier?: string, tracking?: string): Promise<ActionResult> {
+  return rpc("assign_rider", { p_order: orderId, p_rider: riderId, p_courier: courier?.trim() || null, p_tracking: tracking?.trim() || null });
+}
+
+export async function sourcingOutcomeAction(orderId: string, outcome: "alternative_offered" | "alternative_accepted" | "refund", note?: string): Promise<ActionResult> {
+  return rpc("set_sourcing_outcome", { p_order: orderId, p_outcome: outcome, p_note: note?.trim() || null });
+}
+
+const PROOF_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+
+/** Mark delivered with the customer's code, a photo, or (Admin) an override with a reason that is kept. */
+export async function deliverAction(orderId: string, fd: FormData): Promise<ActionResult> {
+  if (!isSupabaseConfigured) return { ok: false, error: "Connect Supabase first." };
+  await requireStaff();
+  const supabase = await createClient();
+  const code = String(fd.get("code") ?? "").trim();
+  const override = String(fd.get("override") ?? "").trim();
+  const file = fd.get("proof");
+  let proof: string | null = null;
+  if (file instanceof File && file.size > 0) {
+    const ext = PROOF_TYPES[file.type];
+    if (!ext || file.size > 5 * 1024 * 1024) return { ok: false, error: "Use a JPG, PNG or WebP photo up to 5 MB." };
+    proof = `${orderId}/${crypto.randomUUID()}.${ext}`;
+    const up = await supabase.storage.from("proofs").upload(proof, file, { contentType: file.type });
+    if (up.error) return { ok: false, error: "Could not upload the photo." };
+  }
+  const { error } = await supabase.rpc("deliver_order", { p_order: orderId, p_code: code || null, p_proof: proof, p_override: override || null });
+  return error ? say(error) : done;
+}
+
+export type PaymentLink = { ok: true; url: string; amount: number; qr: string } | { ok: false; error: string };
+
+/**
+ * A Paystack payment link for what is still due, to paste into WhatsApp, with a QR code to show in person (FR-CO-009).
+ * The verified webhook confirms the payment like any other; nothing here marks the order paid.
+ */
+export async function paymentLinkAction(orderId: string): Promise<PaymentLink> {
+  if (!isSupabaseConfigured) return { ok: false, error: "Connect Supabase first." };
+  await requireStaff();
+  const { paystackSecret } = await import("@/lib/payments/config");
+  if (!paystackSecret()) return { ok: false, error: "Paystack is not switched on yet. Use manual MoMo for now." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("create_payment_link", { p_order: orderId });
+  if (error || !data) return say(error ?? { message: "" }) as PaymentLink;
+  const d = data as { reference: string; amount: number; email: string | null; number: string };
+  const email = d.email || `${d.number.toLowerCase()}@${process.env.PAYSTACK_PLACEHOLDER_DOMAIN || "customers.drezzystores.com"}`;
+  const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const res = await fetch("https://api.paystack.co/transaction/initialize", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${paystackSecret()}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, amount: Math.round(Number(d.amount) * 100), currency: "GHS", reference: d.reference, callback_url: `${site}/track?order=${encodeURIComponent(d.number)}`, channels: ["mobile_money", "card"] }),
+    signal: AbortSignal.timeout(20_000),
+  }).catch(() => null);
+  const j = (await res?.json().catch(() => null)) as { status?: boolean; message?: string; data?: { authorization_url?: string } } | null;
+  const url = j?.data?.authorization_url;
+  if (!j?.status || !url) return { ok: false, error: j?.message ?? "Paystack did not create the link. Try again." };
+  const QR = (await import("qrcode")).default;
+  return { ok: true, url, amount: Number(d.amount), qr: await QR.toDataURL(url, { margin: 1, width: 260 }) };
+}
+
+export async function supportReplyAction(threadId: string, body: string, close = false): Promise<ActionResult> {
+  return rpc("support_reply", { p_thread: threadId, p_body: body, p_close: close });
+}

@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { SearchOverlay } from "@/components/store/SearchOverlay";
+import { useCatalogue, waNumber } from "@/components/CatalogueProvider";
+import { track } from "@/lib/track";
 import { openDrawer, useCart, useWishlist } from "@/lib/cart";
 import { branches } from "@/lib/data";
 
@@ -116,8 +118,12 @@ export function BottomNav() {
 export function WhatsAppButton() {
   const path = usePathname();
   const { region } = useCart();
+  const { site } = useCatalogue();
   if (path.startsWith("/product/") || path.startsWith("/checkout")) return null;
-  const branch = region === "Ashanti" ? branches.kumasi : branches.accra;
+  const kumasiSide = ["Ashanti", "Bono", "Bono East", "Ahafo", "Northern", "Savannah", "North East", "Upper East", "Upper West"].includes(region);
+  const branch = site
+    ? { name: kumasiSide ? "Kumasi" : "Accra", wa: waNumber(kumasiSide ? site.kumasi.whatsapp : site.accra.whatsapp) }
+    : kumasiSide ? branches.kumasi : branches.accra;
   const href = `https://wa.me/${branch.wa}?text=${encodeURIComponent("Hi Drezzy, I need help with an order.")}`;
   return (
     <a
@@ -125,6 +131,7 @@ export function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Chat with the ${branch.name} branch on WhatsApp`}
+      onClick={() => track("whatsapp_click", { page: path, number: branch.name })}
       className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex min-h-12 items-center gap-2 rounded-full bg-lime px-4 text-sm font-semibold text-navy shadow-lg transition active:scale-95 md:bottom-6"
     >
       <Icon name="chat" size={20} />
