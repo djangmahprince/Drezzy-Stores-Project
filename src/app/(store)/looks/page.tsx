@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { ProductPhoto } from "@/components/ProductPhoto";
-import { getCatalogue } from "@/lib/catalogue/server";
+import { getListedCatalogue } from "@/lib/catalogue/server";
 import { getSiteContent } from "@/lib/site/server";
 
 export const metadata = { title: "Shop the look", description: "Complete outfits from Drezzy Stores. Add the whole look to your bag in one tap." };
 
 export default async function Looks() {
-  const [site, products] = await Promise.all([getSiteContent(), getCatalogue()]);
+  const [site, products] = await Promise.all([getSiteContent(), getListedCatalogue()]);
   const bySlug = new Map(products.map((p) => [p.slug, p]));
   return (
     <div>

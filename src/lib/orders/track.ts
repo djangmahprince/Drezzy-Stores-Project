@@ -28,6 +28,8 @@ export type TrackJson = {
   sourcing_outcome?: string | null;
   alternative_note?: string | null;
   feedback?: number | null;
+  delivery_update?: string | null;
+  delivery_update_at?: string | null;
 };
 
 export type StepState = "done" | "current" | "todo";
@@ -49,6 +51,8 @@ export type TrackView = {
   /** The 4-digit code the customer gives the rider, shown once the order is on its way. */
   deliveryCode?: string;
   delivered: boolean;
+  /** Who has the parcel, while it is on the road. We have no GPS, so this is how customers follow it. */
+  onRoad?: { rider: string | null; riderPhone: string | null; courier: string | null; tracking: string | null; update: string | null; updateAt: string | null };
   feedback: number | null;
   /** Products on a delivered order that can still be reviewed. */
   toReview: { name: string; slug: string }[];
@@ -166,6 +170,7 @@ export function buildTrack(t: TrackJson): TrackView {
     helpBranch: t.branch === "kumasi" ? "kumasi" : "accra",
     ...(t.delivery_code ? { deliveryCode: t.delivery_code } : {}),
     delivered,
+    ...(["dispatched", "out_for_delivery", "failed_delivery"].includes(t.status) ? { onRoad: { rider: t.rider_name, riderPhone: t.rider_phone, courier: t.courier, tracking: t.tracking_number, update: t.delivery_update ?? null, updateAt: t.delivery_update_at ? shortTime(t.delivery_update_at) : null } } : {}),
     feedback: t.feedback ?? null,
     toReview: delivered ? t.items.filter((i): i is typeof i & { slug: string } => !!i.slug && !i.reviewed).map((i) => ({ name: i.name, slug: i.slug })) : [],
   };

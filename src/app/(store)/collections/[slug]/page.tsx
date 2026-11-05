@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/store/ProductCard";
-import { getCatalogue } from "@/lib/catalogue/server";
+import { getListedCatalogue } from "@/lib/catalogue/server";
 import type { Product } from "@/lib/catalogue/types";
 import { getSiteContent, type Collection } from "@/lib/site/server";
 
@@ -35,7 +35,7 @@ function members(c: Collection, products: Product[]): Product[] {
 
 async function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [site, products] = await Promise.all([getSiteContent(), getCatalogue()]);
+  const [site, products] = await Promise.all([getSiteContent(), getListedCatalogue()]);
   const c = site.collections.find((x) => x.slug === slug);
   if (!c) notFound();
   const list = members(c, products);

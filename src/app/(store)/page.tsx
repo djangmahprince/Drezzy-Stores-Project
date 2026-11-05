@@ -7,7 +7,7 @@ import { PickedForYou } from "@/components/store/PickedForYou";
 import { ProductCard } from "@/components/store/ProductCard";
 import { ProductPhoto } from "@/components/ProductPhoto";
 import type { Product, Tone } from "@/lib/catalogue/types";
-import { getCatalogue } from "@/lib/catalogue/server";
+import { getListedCatalogue } from "@/lib/catalogue/server";
 import { getArticles } from "@/lib/articles/server";
 import { formatGHS } from "@/lib/data";
 import { getRecentReviews, getSiteContent, publicFile, type Banner, type HomeSection } from "@/lib/site/server";
@@ -95,7 +95,7 @@ function DefaultHero({ hero }: { hero?: Product }) {
 }
 
 export default async function Home() {
-  const [products, articles, site, reviews] = await Promise.all([getCatalogue(), getArticles(), getSiteContent(), getRecentReviews()]);
+  const [products, articles, site, reviews] = await Promise.all([getListedCatalogue(), getArticles(), getSiteContent(), getRecentReviews()]);
   // drops are filtered in the browser (DropsRow), because the current time cannot be part of a prerendered page
   const buyable = products.filter((p) => !p.releaseAt);
   const heroProduct = buyable.find((p) => p.isNew && p.category === "Sneakers") ?? buyable.find((p) => p.isNew) ?? buyable[0];

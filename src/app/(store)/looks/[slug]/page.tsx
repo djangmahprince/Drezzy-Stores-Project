@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/store/ProductCard";
 import { ShopTheLook } from "@/components/store/ShopTheLook";
-import { getCatalogue } from "@/lib/catalogue/server";
+import { getListedCatalogue } from "@/lib/catalogue/server";
 import { getSiteContent } from "@/lib/site/server";
 
 // Cache Components needs at least one path to check the route at build time. A slug nobody uses renders the 404 page.
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 /** One outfit (FR-SF-011): the full look with sizes and Add all to bag, then alternatives to swap in. */
 async function Look({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [site, products] = await Promise.all([getSiteContent(), getCatalogue()]);
+  const [site, products] = await Promise.all([getSiteContent(), getListedCatalogue()]);
   const look = site.looks.find((l) => l.slug === slug);
   if (!look) notFound();
   const bySlug = new Map(products.map((p) => [p.slug, p]));

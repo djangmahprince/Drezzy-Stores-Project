@@ -17,7 +17,8 @@ npm run build
 ## Where the project is
 
 All P0 and P1 requirements in the PRD are built, on one codebase: the shop, My Drezzy accounts, checkout and tracker, the staff
-dashboard, catalogue and sourcing, money, targets, content, analytics, exports and the partner portal at `/partner`.
+dashboard, logistics, catalogue and sourcing, money, targets, content, analytics, exports and the partner portal at `/partner`.
+Products are named to `Docs/Drezzy-Naming-Standard.md`.
 The database enforces every rule with row-level security, and `npm test` exercises those rules.
 
 Waiting on something outside the code:
@@ -31,6 +32,10 @@ Waiting on something outside the code:
 | Google and phone sign-in | Provider set up in Supabase Authentication |
 
 Left for phase 3 (PRD P2): native app store builds, AI stylist, visual search, held-stock mode, international currencies, returns workflow.
+
+## Going live
+
+Follow `Docs/GO-LIVE.md`. `npm run setup:check` says what is connected and what is missing.
 
 ## Connecting Supabase (about ten minutes)
 

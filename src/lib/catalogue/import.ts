@@ -1,5 +1,6 @@
 // Spreadsheet import logic (PRD section 13: "Excel import"). Pure functions only, so it is tested without a database.
 import { audienceToDb, slugify } from "./build.ts";
+import { normaliseSize } from "./naming.ts";
 import type { Availability } from "./types.ts";
 
 /** One variant per row. This is the template customers of the spreadsheet fill in. */
@@ -155,7 +156,7 @@ export function validateTable(table: string[][], categories: CategoryOption[]): 
     const product = cell(r, "product");
     const brand = cell(r, "brand");
     const colour = cell(r, "colour");
-    const size = cell(r, "size") || "One size";
+    const size = normaliseSize(cell(r, "size")) || "One size";
     const style = cell(r, "style") || undefined;
     if (!product) bad("The product name is empty.");
     if (!brand) bad("The brand is empty.");

@@ -40,7 +40,7 @@ ok("a new device sign-in warns the person (not the first device)", (await as("sa
   && (await as("sales", () => tryQ("select public.note_sign_in('bbbbbbbbbbbbbbbb2','Safari on iPhone')"))).ok
   && (await alerts("sales")).some((a) => a.kind === "security"));
 ok("settings change the alert routes and are audited", (await as("owner", () => tryQ("update public.app_settings set value = jsonb_set(value, '{new_order}', '[\"owner\"]') where key = 'alert_routes'"))).n === 1
-  && (await db.query("select count(*)::int n from public.audit_log where table_name = 'app_settings'")).rows[0].n === 1);
+  && (await db.query("select count(*)::int n from public.audit_log where table_name = 'app_settings' and record_id = 'alert_routes'")).rows[0].n === 1);
 ok("sales cannot change settings", (await as("sales", () => tryQ("update public.app_settings set value = '{}' where key = 'alerts'"))).n === 0);
 
 // ---------------------------------------------------------------- riders, delivery and partners

@@ -3,6 +3,7 @@
 import { updateTag } from "next/cache";
 import { requireStaff } from "@/lib/auth";
 import { availabilityToDb, audienceToDb, slugify } from "@/lib/catalogue/build";
+import { normaliseSize, productName } from "@/lib/catalogue/naming";
 import { CATALOGUE_TAG } from "@/lib/catalogue/tags";
 import type { VariantChange } from "@/lib/catalogue/staff-types";
 import { can } from "@/lib/permissions";
@@ -102,21 +103,21 @@ export async function createProduct(_prev: CreateState, fd: FormData): Promise<C
   const me = await requireStaff();
   if (!can(me.permissions, "products", "create")) return { error: "You do not have permission to add products." };
 
-  const name = String(fd.get("name") ?? "").trim();
   const brand = String(fd.get("brand") ?? "").trim();
+  const name = productName(brand, String(fd.get("name") ?? "")); // Brand + Model: the naming standard
   const categoryId = String(fd.get("categoryId") ?? "");
   const audience = audienceToDb(String(fd.get("audience") ?? "unisex"));
   const description = String(fd.get("description") ?? "").trim();
   const details = list(fd.get("details"));
   const styles = list(fd.get("styles"));
   const colours = list(fd.get("colours"));
-  const sizes = list(fd.get("sizes"));
+  const sizes = [...new Set(list(fd.get("sizes")).map(normaliseSize))];
   const price = Number(fd.get("price"));
   const leadDays = Number(fd.get("leadDays") || 2);
   const isNew = fd.get("isNew") === "on";
 
-  if (name.length < 2) return { error: "Give the product a name." };
   if (!brand) return { error: "Enter the brand." };
+  if (name.length <= brand.length) return { error: "Enter the model, for example Dunk." };
   if (!categoryId) return { error: "Choose a category." };
   if (!Number.isFinite(price) || price < 0) return { error: "Enter a price." };
   if (!Number.isInteger(leadDays) || leadDays < 0 || leadDays > 60) return { error: "Lead time must be 0 to 60 days." };
@@ -125,7 +126,7 @@ export async function createProduct(_prev: CreateState, fd: FormData): Promise<C
   const count = Math.max(1, styles.length) * colours.length * sizes.length;
   if (count > 400) return { error: `That makes ${count} variants. Keep it under 400 or split it into products.` };
 
-  const slug = slugify(`${brand} ${name}`);
+  const slug = slugify(name);
   const sku = (slugify(name).replace(/-/g, "").slice(0, 8) || "ITEM").toUpperCase();
 
   const supabase = await createClient();

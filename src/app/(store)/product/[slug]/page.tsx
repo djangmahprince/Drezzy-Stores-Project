@@ -76,9 +76,10 @@ async function Reviews({ slug }: { slug: string }) {
 
 async function ProductPageContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const products = await getCatalogue();
-  const p = products.find((x) => x.slug === slug);
+  const all = await getCatalogue();
+  const p = all.find((x) => x.slug === slug);
   if (!p) notFound();
+  const products = all.filter((x) => x.variants.some((v) => v.availability !== "Unavailable")); // suggestions only show what can be bought
 
   const [reviews, alsoSlugs] = await Promise.all([getProductReviews(slug), getAlsoBought(slug)]);
   const bySlug = new Map(products.map((x) => [x.slug, x]));

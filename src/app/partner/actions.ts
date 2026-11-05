@@ -13,3 +13,12 @@ export async function partnerUpdateAction(orderId: string, action: "out_for_deli
   revalidatePath("/partner");
   return { ok: true };
 }
+
+/** A short update the customer reads on the tracker. */
+export async function partnerNoteAction(orderId: string, text: string): Promise<PartnerResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("partner_note", { p_order: orderId, p_text: text });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/partner");
+  return { ok: true };
+}

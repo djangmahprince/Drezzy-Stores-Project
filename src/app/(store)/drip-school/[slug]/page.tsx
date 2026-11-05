@@ -13,7 +13,7 @@ import { headings, parseBody } from "@/lib/articles/format";
 import { getSiteContent, publicFile } from "@/lib/site/server";
 import { getArticles } from "@/lib/articles/server";
 import { availabilitySummary } from "@/lib/catalogue/build";
-import { getCatalogue } from "@/lib/catalogue/server";
+import { getListedCatalogue } from "@/lib/catalogue/server";
 import { formatGHS } from "@/lib/data";
 
 // Cache Components needs at least one path to check the route at build time; a slug nobody uses renders the 404 page.
@@ -39,7 +39,7 @@ async function ArticleContent({ params }: { params: Promise<{ slug: string }> })
   const a = articles.find((x) => x.slug === slug);
   if (!a) notFound();
 
-  const [catalogue, site] = await Promise.all([getCatalogue(), getSiteContent()]);
+  const [catalogue, site] = await Promise.all([getListedCatalogue(), getSiteContent()]);
   const dunk = catalogue.find((p) => p.slug === "nike-sb-dunk-low");
   // related stories: same tags first, then the same type, then the newest
   const score = (x: typeof a) => (x.tags ?? []).filter((t) => (a.tags ?? []).includes(t)).length * 2 + (x.type === a.type ? 1 : 0);

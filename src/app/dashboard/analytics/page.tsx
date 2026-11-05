@@ -8,6 +8,7 @@ import { can } from "@/lib/permissions";
 import { Kpi, PageHead, Progress, Table } from "@/components/dashboard/DashShell";
 import { Guard } from "@/components/dashboard/Guard";
 import { getAnalytics, ranges } from "@/lib/analytics/staff";
+import { lastDays } from "@/lib/period";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const metadata = { title: "Analytics" };
@@ -47,11 +48,12 @@ async function Live({ searchParams }: { searchParams: Promise<Params> }) {
   const [{ days, tab = "overview", split = "" }, me] = await Promise.all([searchParams, requireStaff()]);
   const n = (ranges as readonly number[]).includes(Number(days)) ? Number(days) : 30;
   const a = tab === "overview" ? await getAnalytics(n) : null;
+  const { from, to } = await lastDays(n);
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <nav className="flex gap-1 overflow-x-auto" aria-label="Reports">{tabs.map(([k, l]) => <Link key={k} href={`?tab=${k}&days=${n}`} aria-current={tab === k ? "page" : undefined} className={`chip min-h-9 shrink-0 px-3 ${tab === k ? "bg-navy text-white" : "bg-white text-navy"}`}>{l}</Link>)}</nav>
-        <nav className="flex gap-1" aria-label="Period">{ranges.map((r) => <Link key={r} href={`?tab=${tab}&days=${r}`} className={`chip min-h-9 px-3 ${n === r ? "bg-navy text-white" : "bg-white text-navy"}`}>{r} days</Link>)}</nav>
+        <nav className="flex gap-1" aria-label="Period">{ranges.map((r) => <Link key={r} href={`?tab=${tab}&days=${r}`} className={`chip min-h-9 px-3 ${n === r ? "bg-navy text-white" : "bg-white text-navy"}`}>{r === 1 ? "Today" : r === 7 ? "This week" : r === 30 ? "This month" : `${r} days`}</Link>)}<a href={`/api/export?kind=analytics&format=xlsx&from=${from}&to=${to}`} className="chip min-h-9 bg-white px-3 text-navy">Export</a></nav>
       </div>
       {tab === "overview" && <><Overview days={n} />{a && <div className="mt-6"><AnalyticsLive a={a} /></div>}</>}
       {tab === "funnel" && <Funnel days={n} split={split} />}

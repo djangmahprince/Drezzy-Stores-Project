@@ -5,7 +5,7 @@ import type { Product } from "@/lib/catalogue/types";
 import type { Zone } from "@/lib/data";
 
 /** Contact details from Settings (the WhatsApp button, footer and product page use them). */
-export type SiteContacts = { accra: { call: string; whatsapp: string }; kumasi: { call: string; whatsapp: string }; hours: string; socials: Record<string, string | undefined> };
+export type SiteContacts = { accra: { call: string; whatsapp: string }; kumasi: { call: string; whatsapp: string }; hours: string; logistics?: { accra?: string; kumasi?: string; hours?: string }; socials: Record<string, string | undefined> };
 
 type Catalogue = { products: Product[]; get: (slug: string) => Product | undefined; zones: Zone[]; zone: (region: string) => Zone | undefined; site?: SiteContacts };
 

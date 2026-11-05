@@ -26,3 +26,11 @@ export async function getCatalogue(): Promise<Product[]> {
   }
   return (data as unknown as ProductRow[]).map(productFromRow).filter((p) => p.variants.length > 0);
 }
+
+/**
+ * What shoppers browse. A product with no size available drops off the shop by itself, as soon as staff flag it. Its page
+ * still opens from an old link or a past order, and says it is unavailable, with Notify me.
+ */
+export async function getListedCatalogue(): Promise<Product[]> {
+  return (await getCatalogue()).filter((p) => p.variants.some((v) => v.availability !== "Unavailable"));
+}

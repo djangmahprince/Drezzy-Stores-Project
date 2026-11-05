@@ -6,6 +6,7 @@ import { CatalogueBulkBar } from "@/components/dashboard/CatalogueBulkBar";
 import { ColumnChooser, SavedViews, useColumns } from "@/components/dashboard/ListTools";
 import { Pill } from "@/components/dashboard/DashShell";
 import { ProductPhoto } from "@/components/ProductPhoto";
+import { nameIssues } from "@/lib/catalogue/naming";
 import type { StaffCatalogue, StaffProduct } from "@/lib/catalogue/staff-types";
 
 const COLS = ["Category", "Brand", "Price", "Sizes", "Status", "Tags"];
@@ -59,7 +60,7 @@ export function ProductsTable({ data }: { data: StaffCatalogue }) {
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-3">
                       <span className="relative size-11 shrink-0 overflow-hidden rounded-[8px] bg-card"><ProductPhoto product={p} label="" sizes="44px" /></span>
-                      <span className="min-w-0">{mode === "db" ? <Link href={`/dashboard/catalogue/${p.id}`} className="font-semibold text-navy underline">{p.name}</Link> : <b>{p.name}</b>}<span className="block text-xs text-text2">{p.sku}</span></span>
+                      <span className="min-w-0">{mode === "db" ? <Link href={`/dashboard/catalogue/${p.id}`} className="font-semibold text-navy underline">{p.name}</Link> : <b>{p.name}</b>}<span className="block text-xs text-text2">{p.sku}</span>{nameIssues(p.brand, p.name).length > 0 && <span className="block text-xs text-warning">{nameIssues(p.brand, p.name)[0]}</span>}</span>
                     </div>
                   </td>
                   {on("Category") && <td className="px-3 py-2">{p.category}</td>}

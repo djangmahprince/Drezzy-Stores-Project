@@ -3,13 +3,17 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { createProduct, type CreateState } from "@/app/dashboard/catalogue/actions";
+import { normaliseSize, productName, variantTitle } from "@/lib/catalogue/naming";
 
 const L = ({ id, children }: { id: string; children: React.ReactNode }) => <label htmlFor={id} className="mb-1 block text-sm font-medium">{children}</label>;
 
+const first = (v: string) => v.split(/[,\n]/).map((x) => x.trim()).find(Boolean) ?? "";
 const count = (v: string) => v.split(/[,\n]/).map((x) => x.trim()).filter(Boolean).length;
 
 export function ProductForm({ categories }: { categories: { id: string; label: string }[] }) {
   const [state, action, pending] = useActionState<CreateState, FormData>(createProduct, {});
+  const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
   const [styles, setStyles] = useState("");
   const [colours, setColours] = useState("");
   const [sizes, setSizes] = useState("");
@@ -32,8 +36,8 @@ export function ProductForm({ categories }: { categories: { id: string; label: s
   return (
     <form action={action} className="card max-w-3xl space-y-5 p-5" noValidate>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div><L id="p-name">Product name</L><input id="p-name" name="name" className="field" required /></div>
-        <div><L id="p-brand">Brand</L><input id="p-brand" name="brand" className="field" required /></div>
+        <div><L id="p-brand">Brand</L><input id="p-brand" name="brand" value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Nike" className="field" required /></div>
+        <div><L id="p-name">Model</L><input id="p-name" name="name" value={model} onChange={(e) => setModel(e.target.value)} placeholder="Dunk" className="field" required /></div>
         <div><L id="p-cat">Category</L>
           <select id="p-cat" name="categoryId" className="field" defaultValue=""><option value="" disabled>Choose</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
         <div><L id="p-aud">For</L>
@@ -46,11 +50,11 @@ export function ProductForm({ categories }: { categories: { id: string; label: s
         <legend className="px-1 text-sm font-semibold">Variants</legend>
         <p className="text-sm text-text2">Separate values with commas. Every style, colour and size combination becomes its own variant. Use <b>One size</b> for watches and caps. Leave style empty if the product has none.</p>
         <div className="grid gap-3 sm:grid-cols-3">
-          <div><L id="p-styles">Styles (optional)</L><input id="p-styles" name="styles" value={styles} onChange={(e) => setStyles(e.target.value)} placeholder="Low, Mid, High" className="field" /></div>
+          <div><L id="p-styles">Cuts (optional)</L><input id="p-styles" name="styles" value={styles} onChange={(e) => setStyles(e.target.value)} placeholder="Low, Mid, High" className="field" /></div>
           <div><L id="p-colours">Colours</L><input id="p-colours" name="colours" value={colours} onChange={(e) => setColours(e.target.value)} placeholder="Black / White, Purple" className="field" /></div>
           <div><L id="p-sizes">Sizes</L><input id="p-sizes" name="sizes" value={sizes} onChange={(e) => setSizes(e.target.value)} placeholder="39, 40, 41, 42" className="field" /></div>
         </div>
-        <p className="text-sm font-medium" aria-live="polite">{variants > 0 ? `This creates ${variants} ${variants === 1 ? "variant" : "variants"}.` : "Add colours and sizes to see how many variants this creates."}</p>
+        <p className="text-sm font-medium" aria-live="polite">{variants > 0 ? `This creates ${variants} ${variants === 1 ? "variant" : "variants"}, named like ${variantTitle(productName(brand, model), { style: first(styles), colour: first(colours), size: normaliseSize(first(sizes)) })}.` : "Add colours and sizes to see how many variants this creates."}</p>
       </fieldset>
 
       <div><L id="p-desc">Description</L><textarea id="p-desc" name="description" className="field min-h-24 py-2" placeholder="Material, fit, how it runs on size, and what comes in the box." /></div>

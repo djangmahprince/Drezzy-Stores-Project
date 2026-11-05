@@ -15,7 +15,7 @@
     "test:payments": "node --no-warnings supabase/tests/payments.test.mjs",
     "test:orders-logic": "node --no-warnings supabase/tests/orders-logic.test.mjs",
     "test:orders-contract": "node --no-warnings supabase/tests/orders-contract.test.mjs",
-    "test": "npm run test:db && npm run test:seed && npm run test:catalogue && npm run test:payments && npm run test:orders-logic && npm run test:orders && npm run test:orders-contract && npm run test:supplier-orders && npm run test:money && npm run test:refunds && npm run test:notifications && npm run test:notify-logic && npm run test:targets && npm run test:pace && npm run test:salary && npm run test:csv && npm run test:exports && npm run test:articles && npm run test:articles-logic && npm run test:receipts && npm run test:whatsapp && npm run test:accounts && npm run test:shop && npm run test:operations && npm run test:content-analytics && npm run test:catalogue-tools && npm run test:supabase-shape",
+    "test": "npm run test:db && npm run test:seed && npm run test:catalogue && npm run test:payments && npm run test:orders-logic && npm run test:orders && npm run test:orders-contract && npm run test:supplier-orders && npm run test:money && npm run test:refunds && npm run test:notifications && npm run test:notify-logic && npm run test:targets && npm run test:pace && npm run test:salary && npm run test:csv && npm run test:exports && npm run test:articles && npm run test:articles-logic && npm run test:receipts && npm run test:whatsapp && npm run test:accounts && npm run test:shop && npm run test:operations && npm run test:content-analytics && npm run test:catalogue-tools && npm run test:supabase-shape && npm run test:logistics && npm run test:naming",
     "test:supplier-orders": "node --no-warnings supabase/tests/supplier-orders.test.mjs",
     "test:money": "node --no-warnings supabase/tests/money.test.mjs",
     "test:refunds": "node --no-warnings supabase/tests/refunds.test.mjs",
@@ -37,7 +37,10 @@
     "test:catalogue-tools": "node --no-warnings supabase/tests/catalogue-tools.test.mjs",
     "test:supabase-shape": "node --no-warnings supabase/tests/supabase-shape.test.mjs",
     "db:status": "node scripts/db-apply.mjs",
-    "db:apply": "node scripts/db-apply.mjs --apply"
+    "db:apply": "node scripts/db-apply.mjs --apply",
+    "test:logistics": "node --no-warnings supabase/tests/logistics.test.mjs",
+    "test:naming": "node --no-warnings supabase/tests/naming.test.mjs",
+    "setup:check": "node --no-warnings scripts/check-setup.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

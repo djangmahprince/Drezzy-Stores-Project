@@ -15,7 +15,7 @@ type Branch = "all" | "accra" | "kumasi";
 const active = (path: string, href: string) => (href === "/dashboard" ? path === href : path === href || path.startsWith(`${href}/`));
 
 const icons: Record<string, IconName> = {
-  "/dashboard": "home", "/dashboard/orders": "bag", "/dashboard/dispatch": "truck", "/dashboard/products": "sneaker", "/dashboard/catalogue": "box", "/dashboard/customers": "people",
+  "/dashboard": "home", "/dashboard/orders": "bag", "/dashboard/dispatch": "truck", "/dashboard/logistics": "phone", "/dashboard/products": "sneaker", "/dashboard/catalogue": "box", "/dashboard/customers": "people",
   "/dashboard/support": "inbox", "/dashboard/staff": "target", "/dashboard/money": "card", "/dashboard/analytics": "chart", "/dashboard/content": "book", "/dashboard/exports": "download", "/dashboard/settings": "gear",
 };
 

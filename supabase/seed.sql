@@ -61,9 +61,9 @@ from public.products p, (values
 where p.slug = 'nike-sb-dunk-low'
 on conflict (sku) do nothing;
 
--- USA "Dictator 1976" collared shirt
+-- Dictator 1976 USA collared shirt
 insert into public.products (slug, sku, name, brand, category_id, audience, description, details, is_new, popular, published, art, images, tags)
-select 'dictator-1976-shirt', 'DCT-76', 'USA "Dictator 1976" collared shirt', 'Dictator', c.id, 'unisex'::public.audience, 'An oversized long-sleeve collared shirt with a bold Dictator 1976 print, USA badge and script down the sleeves. One piece that carries the whole fit.', array['Brand new', 'Relaxed, oversized fit', 'Long sleeves with sleeve print']::text[], true, 85, true, '{"kind":"apparel","tone":"grey","upper":"#f2f3f8","accent":"#00115b"}'::jsonb, array['/products/dictator-1976-shirt.webp']::text[], array['Streetwear', 'Bold colours']::text[]
+select 'dictator-1976-shirt', 'DCT-76', 'Dictator 1976 USA collared shirt', 'Dictator', c.id, 'unisex'::public.audience, 'An oversized long-sleeve collared shirt with a bold Dictator 1976 print, USA badge and script down the sleeves. One piece that carries the whole fit.', array['Brand new', 'Relaxed, oversized fit', 'Long sleeves with sleeve print']::text[], true, 85, true, '{"kind":"apparel","tone":"grey","upper":"#f2f3f8","accent":"#00115b"}'::jsonb, array['/products/dictator-1976-shirt.webp']::text[], array['Streetwear', 'Bold colours']::text[]
 from public.categories c where c.slug = 'shirts'
 on conflict (slug) do nothing;
 insert into public.variants (product_id, style, colour, size, sku, price, compare_at, availability, lead_days, preferred_supplier_id)

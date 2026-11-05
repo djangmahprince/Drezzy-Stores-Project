@@ -15,8 +15,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 const EXAMPLE: TrackJson = {
   number: "DRZ-1027", placed_at: "2026-10-21T09:12:00Z", status: "out_for_delivery", payment_state: "paid", plan: "full", total: 430,
   amount_paid: 430, balance_due: 0, est_delivery_date: "2026-10-21", delivery_method: "home", region: "Ashanti", city: "Kumasi", area: "Adum",
-  receiver_name: "Ama Mensah", courier: null, tracking_number: null, rider_name: "Yaw", rider_phone: "020 000 0000", branch: "kumasi",
-  items: [{ name: 'Air Jordan 1 Retro High OG "Triple Black"', detail: "Triple Black · Size 42", qty: 1 }],
+  receiver_name: "Ama Mensah", courier: null, tracking_number: null, rider_name: "Yaw", rider_phone: "020 000 0000", delivery_update: "On the way to you", delivery_update_at: "2026-10-23T10:20:00Z", branch: "kumasi",
+  items: [{ name: 'Nike SB Dunk Low', detail: "Black / White · Size 42", qty: 1 }],
   events: [
     { kind: "payment", status: "to_confirm", at: "2026-10-21T09:13:00Z", note: "Payment confirmed", by: "" },
     { kind: "status", status: "to_source", at: "2026-10-21T09:31:00Z", note: "Confirmed by Drezzy", by: "Kwame" },
@@ -91,6 +91,8 @@ export function TrackView({ initialOrder = "", initialPhone = "" }: { initialOrd
   }, [view?.number, view?.stepNumber]);
 
   const { site } = useCatalogue();
+  const logistics = (v: View) => site?.logistics?.[v.helpBranch] || (site ? site[v.helpBranch].call : branches[v.helpBranch].call);
+  const logisticsHours = site?.logistics?.hours || site?.hours;
   const wa = (v: View) => `https://wa.me/${site ? waNumber(v.helpBranch === "kumasi" ? site.kumasi.whatsapp : site.accra.whatsapp) : branches[v.helpBranch].wa}?text=${encodeURIComponent(`Hi Drezzy, I need help with ${v.number}`)}`;
 
   return (
@@ -166,6 +168,25 @@ export function TrackView({ initialOrder = "", initialPhone = "" }: { initialOrd
               </li>
             ))}
           </ol>
+
+          {view.onRoad && (
+            <section className="card mt-8 p-5 text-sm" aria-label="Who has your order">
+              <p className="font-semibold">Who has your order</p>
+              {view.onRoad.rider ? (
+                <>
+                  <p className="mt-1 text-lg font-bold text-navy">{view.onRoad.rider}</p>
+                  {view.onRoad.riderPhone && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <a href={`tel:${view.onRoad.riderPhone}`} className="btn-primary !min-h-11"><Icon name="phone" size={18} /> Call your rider</a>
+                      <a href={`https://wa.me/${waNumber(view.onRoad.riderPhone)}?text=${encodeURIComponent(`Hi, I'm checking on my Drezzy order ${view.number}`)}`} target="_blank" rel="noopener noreferrer" className="btn-outline !min-h-11"><Icon name="chat" size={18} /> WhatsApp</a>
+                    </div>
+                  )}
+                </>
+              ) : view.onRoad.courier ? <p className="mt-1 text-lg font-bold text-navy">{view.onRoad.courier}{view.onRoad.tracking ? <span className="block text-sm font-normal text-text2">Tracking number: {view.onRoad.tracking}</span> : null}</p> : <p className="mt-1 text-text2">Our logistics team is arranging this.</p>}
+              {view.onRoad.update && <p className="mt-3 rounded-[10px] bg-card px-3 py-2">{view.onRoad.update}{view.onRoad.updateAt ? <span className="text-text2"> · {view.onRoad.updateAt}</span> : null}</p>}
+              <p className="mt-3 border-t border-line pt-3 text-text2">{view.onRoad.rider ? "Can't reach your rider?" : "Any questions?"} Call Drezzy Logistics on <a href={`tel:${logistics(view)}`} className="font-semibold text-navy underline">{logistics(view)}</a>{logisticsHours ? `, ${logisticsHours}` : ""}.</p>
+            </section>
+          )}
 
           <div className="card mt-8 p-5 text-sm">
             <p className="font-semibold">In this order</p>

@@ -15,6 +15,8 @@ export type SiteSettings = {
   accra: { call: string; whatsapp: string };
   kumasi: { call: string; whatsapp: string };
   hours: string;
+  /** The company delivery line, per branch. Empty falls back to the branch number. */
+  logistics?: { accra?: string; kumasi?: string; hours?: string };
   socials: { instagram?: string; tiktok?: string; snapchat?: string; facebook?: string };
   promise: string;
 };

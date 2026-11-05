@@ -66,7 +66,7 @@ export const sampleDefs: SampleDef[] = [
     art: { kind: "sneaker", tone: "navy", upper: "#f4f4f6", accent: "#14161f" }, images: ["/products/nike-sb-dunk-low.webp"], tags: ["Streetwear", "Campus"],
   },
   {
-    slug: "dictator-1976-shirt", sku: "DCT-76", name: 'USA "Dictator 1976" collared shirt', brand: "Dictator",
+    slug: "dictator-1976-shirt", sku: "DCT-76", name: "Dictator 1976 USA collared shirt", brand: "Dictator",
     category: "Shirts", audience: "Unisex", price: 250 /* sample */, colours: ["White / Black"], sizes: letterSizes(["M", "L", "XL", "XXL"]),
     isNew: true, popular: 85, leadDays: 3,
     description: "An oversized long-sleeve collared shirt with a bold Dictator 1976 print, USA badge and script down the sleeves. One piece that carries the whole fit.",

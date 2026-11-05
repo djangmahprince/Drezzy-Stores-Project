@@ -6,6 +6,7 @@ import { useRef, useState, useTransition } from "react";
 import { saveProductAction, setSaleAction, type ProductValues } from "@/app/dashboard/catalogue/tools-actions";
 import { mediaUploadAction } from "@/app/dashboard/content/actions";
 import type { ProductEdit } from "@/lib/catalogue/staff-types";
+import { nameIssues } from "@/lib/catalogue/naming";
 import { publicFile } from "@/lib/media";
 
 type Msg = { text: string; bad?: boolean } | null;
@@ -100,7 +101,7 @@ export function ProductEditor({ p, categories }: { p: ProductEdit; categories: {
 
       <section className="card grid gap-4 p-5 sm:grid-cols-2">
         <h2 className="font-semibold sm:col-span-2">Details</h2>
-        <Field label="Product name"><input className="field" value={v.name} onChange={set("name")} /></Field>
+        <Field label="Product name" hint={nameIssues(v.brand, v.name)[0] ?? "Brand and model, for example Nike Dunk. Cut, colour and size are its variants."}><input className="field" value={v.name} onChange={set("name")} /></Field>
         <Field label="Brand"><input className="field" value={v.brand} onChange={set("brand")} /></Field>
         <Field label="Category"><select className="field" value={v.categoryId} onChange={set("categoryId")}>{categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></Field>
         <Field label="For"><select className="field" value={v.audience} onChange={set("audience")}>{audiences.map(([, l]) => <option key={l}>{l}</option>)}</select></Field>

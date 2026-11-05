@@ -28,7 +28,7 @@ type Json = {
   sources: { source: string; orders: number }[]; top_products: { name: string; units: number; revenue: number | string | null }[];
 };
 
-export const ranges = [7, 30, 90] as const;
+export const ranges = [1, 7, 30, 90] as const;
 
 /** The last `days` days, ending today (UTC, which is Accra time). */
 export async function getAnalytics(days: number): Promise<Analytics | null> {

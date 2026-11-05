@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { Kpi, Progress, Table } from "@/components/dashboard/DashShell";
-import { ranges, type Analytics } from "@/lib/analytics/staff";
+import type { Analytics } from "@/lib/analytics/staff";
 
 const ghs = (n: number) => `GHS ${n.toLocaleString("en-GH")}`;
 const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 1000) / 10}%` : "–");
@@ -12,11 +11,6 @@ export function AnalyticsLive({ a }: { a: Analytics }) {
   const hasVisits = a.funnel[0]?.count > 0;
   return (
     <>
-      <nav className="mb-4 flex gap-2" aria-label="Period">
-        {ranges.map((r) => (
-          <Link key={r} href={`/dashboard/analytics?days=${r}`} aria-current={r === a.days ? "page" : undefined} className={`chip min-h-9 px-4 text-sm ${r === a.days ? "bg-navy text-white" : "bg-white text-navy"}`}>Last {r} days</Link>
-        ))}
-      </nav>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Gross sales" value={a.grossSales === null ? "Not in your view" : ghs(a.grossSales)} note={`${a.paidOrders} paid orders`} />
         <Kpi label="Average order value" value={a.averageOrder === null ? "–" : ghs(a.averageOrder)} />

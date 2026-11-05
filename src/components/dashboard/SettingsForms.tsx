@@ -25,6 +25,8 @@ export function SiteSettingsForm({ initial, canEdit }: { initial: J; canEdit: bo
     <form className="card grid gap-3 p-5 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); start(async () => { const r = await siteSettingsAction(d); setMsg(r.ok ? { text: "Saved. The shop shows it now." } : { text: r.error ?? "Failed", bad: true }); }); }}>
       {field("accra.call", "Accra: call")}{field("accra.whatsapp", "Accra: WhatsApp")}
       {field("kumasi.call", "Kumasi: call")}{field("kumasi.whatsapp", "Kumasi: WhatsApp")}
+      {field("logistics.accra", "Logistics line: Accra")}{field("logistics.kumasi", "Logistics line: Kumasi")}
+      {field("logistics.hours", "Logistics line hours")}
       {field("hours", "Opening hours")}{field("promise", "Delivery promise (announcement bar fallback)")}
       {field("socials.instagram", "Instagram link")}{field("socials.tiktok", "TikTok link")}
       {field("socials.snapchat", "Snapchat link")}{field("socials.facebook", "Facebook link")}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { partnerUpdateAction } from "@/app/partner/actions";
+import { partnerNoteAction, partnerUpdateAction } from "@/app/partner/actions";
 
 type Job = {
   id: string; number: string; status: string; receiver: string; phone: string; region: string | null; city: string | null; area: string | null; street: string | null;
@@ -22,6 +22,7 @@ function JobCard({ j }: { j: Job }) {
   const [method, setMethod] = useState<"cash" | "momo">("cash");
   const [reference, setReference] = useState("");
   const [panel, setPanel] = useState<"" | "failed" | "collect">("");
+  const [update, setUpdate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const balance = Number(j.balance);
@@ -60,6 +61,12 @@ function JobCard({ j }: { j: Job }) {
             <div className="flex gap-2">
               <input className="field flex-1" inputMode="numeric" maxLength={4} aria-label="Customer's 4-digit delivery code" placeholder="Customer's 4-digit code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
               <button type="button" disabled={pending || code.length !== 4} className="btn-primary disabled:opacity-50" onClick={() => run("delivered", { code })}>Delivered</button>
+            </div>
+          )}
+          {onWay && (
+            <div className="flex gap-2">
+              <input className="field flex-1 !text-sm" maxLength={200} aria-label="Update for the customer" placeholder="Update for the customer" value={update} onChange={(e) => setUpdate(e.target.value)} />
+              <button type="button" disabled={pending || !update.trim()} className="btn-outline disabled:opacity-50" onClick={() => start(async () => { const r = await partnerNoteAction(j.id, update); setError(r.ok ? null : r.error); if (r.ok) setUpdate(""); })}>Send</button>
             </div>
           )}
           {onWay && <button type="button" className="text-sm text-error underline" onClick={() => setPanel(panel === "failed" ? "" : "failed")}>Could not deliver</button>}

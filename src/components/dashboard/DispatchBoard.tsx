@@ -108,11 +108,13 @@ function Card({ o, riders, dragging, onDragStart, onDragEnd, onMove, onAssign }:
       </p>
       <p className="font-medium">{o.customer} · {o.place}</p>
       <p className="mt-0.5 text-text2">{o.items}</p>
+      {o.phone && <p className="text-xs text-text2">Customer: <a href={`tel:${o.phone}`} className="text-navy underline">{o.phone}</a></p>}
+      {o.rider && <p className="text-xs text-text2">Rider: {o.rider}{o.riderPhone && <> · <a href={`tel:${o.riderPhone}`} className="text-navy underline">{o.riderPhone}</a></>}</p>}
       <p className="mt-2 flex flex-wrap gap-1.5">
         <span className={`chip !rounded-[6px] !px-2 !py-0.5 ${o.balance > 0 ? "bg-[#fbeedb] text-warning" : "bg-[#e3f5ee] text-success"}`}>{o.balance > 0 ? `Half paid · collect GHS ${o.balance}` : o.payNote}</span>
         <span className="chip !rounded-[6px] bg-navy !px-2 !py-0.5 text-white">{o.branch}</span>
         {o.supplier && o.status === "to_source" && <span className="chip !rounded-[6px] bg-card !px-2 !py-0.5 text-text2">{o.supplier} · ordered</span>}
-        {carrierOf(o) && <span className="chip !rounded-[6px] bg-card !px-2 !py-0.5 text-text2">{carrierOf(o)}</span>}
+        {o.courier && <span className="chip !rounded-[6px] bg-card !px-2 !py-0.5 text-text2">{o.courier}</span>}
       </p>
       {placeOrder && <Link href={`/dashboard/orders/${o.id}`} className={dashed}>Place supplier order</Link>}
       {needsCarrier && !canAssign && <Link href={`/dashboard/orders/${o.id}`} className={dashed}>{assignWord}</Link>}

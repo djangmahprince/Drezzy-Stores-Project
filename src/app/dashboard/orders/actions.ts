@@ -56,6 +56,11 @@ export async function receiveSupplierOrderAction(id: string): Promise<ActionResu
   return rpc("receive_supplier_order", { p_supplier_order: id, p_receipt: null });
 }
 
+/** A short note the customer reads on the tracker, in place of GPS. */
+export async function deliveryUpdateAction(orderId: string, text: string): Promise<ActionResult> {
+  return rpc("set_delivery_update", { p_order: orderId, p_text: text });
+}
+
 /** Part of a supplier order arrived. When the last item is in, the order closes and its cost reaches Money. */
 export async function receiveSupplierItemsAction(id: string, itemIds: string[]): Promise<ActionResult> {
   return rpc("receive_supplier_items", { p_supplier_order: id, p_items: itemIds });

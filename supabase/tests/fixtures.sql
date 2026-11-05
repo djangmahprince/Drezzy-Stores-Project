@@ -237,3 +237,5 @@ from public.products p, (values
 where p.slug = 'navy-cap'
 on conflict (sku) do nothing;
 
+-- the rules tests move orders along without assigning riders; logistics.test.mjs turns this rule on
+update public.app_settings set value = value || '{"require_carrier": false}'::jsonb where key = 'delivery';
